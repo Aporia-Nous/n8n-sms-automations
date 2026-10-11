@@ -1,0 +1,26 @@
+{
+    "ok": true,
+    "flow": "review_reply",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550131",
+    "action": "forward",
+    "reason": "already_replied_once",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": {
+        "subject": "Another reply from Chris Allen",
+        "priority": "normal"
+    },
+    "llm_used": false,
+    "ref": "J1",
+    "detail": {
+        "rating": null,
+        "mood": "happy"
+    },
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "logged_not_sent"
+    }
+}

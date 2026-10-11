@@ -1,0 +1,26 @@
+{
+    "ok": true,
+    "flow": "missed_call",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550145",
+    "action": "skip",
+    "reason": "opted_out",
+    "test_mode": true,
+    "hours": {
+        "open": true,
+        "local": "thu 16:05",
+        "next_open": "tomorrow at 8 AM"
+    },
+    "sms": null,
+    "owner_alert": {
+        "subject": "Missed call from +15555550145",
+        "priority": "normal"
+    },
+    "llm_used": false,
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "logged_not_sent"
+    }
+}

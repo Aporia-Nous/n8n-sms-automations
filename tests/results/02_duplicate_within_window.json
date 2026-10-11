@@ -1,0 +1,23 @@
+{
+    "ok": true,
+    "flow": "missed_call",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550123",
+    "action": "skip",
+    "reason": "duplicate_within_24h",
+    "test_mode": true,
+    "hours": {
+        "open": true,
+        "local": "thu 15:40",
+        "next_open": "tomorrow at 8 AM"
+    },
+    "sms": null,
+    "owner_alert": null,
+    "llm_used": false,
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "none"
+    }
+}

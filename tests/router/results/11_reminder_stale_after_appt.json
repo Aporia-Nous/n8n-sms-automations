@@ -1,0 +1,26 @@
+{
+    "ok": true,
+    "flow": "sms_router",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550141",
+    "action": "routed",
+    "target": "reviews",
+    "rule": "c:only_live_context",
+    "test_mode": true,
+    "downstream": {
+        "flow": "review_reply",
+        "action": "forward",
+        "reason": "already_replied_once",
+        "ref": "KJ1",
+        "sms": null,
+        "owner_alert": {
+            "subject": "Another reply from Jordan Wells",
+            "priority": "normal"
+        },
+        "delivery": {
+            "mode": "test",
+            "sms": "none",
+            "owner_alert": "logged_not_sent"
+        }
+    }
+}

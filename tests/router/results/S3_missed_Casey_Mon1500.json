@@ -1,0 +1,33 @@
+{
+    "ok": true,
+    "flow": "missed_call",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550142",
+    "action": "text",
+    "reason": "missed_in_hours",
+    "test_mode": true,
+    "hours": {
+        "open": true,
+        "local": "mon 15:00",
+        "next_open": "tomorrow at 8 AM"
+    },
+    "sms": {
+        "to": "+15555550142",
+        "from": "+15555550100",
+        "kind": "missed_call_text_back",
+        "body": "Hi, it's Kettle Creek Auto Repair. Sorry we missed your call! How can we help? Reply here or book: https://example.com/book/kettle-creek Reply STOP to opt out.",
+        "segments": 1,
+        "encoding": "GSM-7"
+    },
+    "owner_alert": {
+        "subject": "Missed call from +15555550142",
+        "priority": "normal"
+    },
+    "llm_used": false,
+    "delivery": {
+        "mode": "test",
+        "sms": "logged_not_sent",
+        "owner_alert": "logged_not_sent"
+    }
+}

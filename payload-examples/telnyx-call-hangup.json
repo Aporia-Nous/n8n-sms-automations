@@ -1,0 +1,20 @@
+{
+  "data": {
+    "record_type": "event",
+    "event_type": "call.hangup",
+    "id": "0ccc7b54-0000-0000-0000-000000000000",
+    "occurred_at": "2026-10-11T19:00:00Z",
+    "payload": {
+      "call_control_id": "v3:...",
+      "call_session_id": "...",
+      "from": "+15555550167",
+      "to": "+15555550100",
+      "direction": "incoming",
+      "state": "hangup",
+      "hangup_cause": "timeout",
+      "hangup_source": "callee",
+      "sip_hangup_cause": "480"
+    }
+  },
+  "_note": "hangup_cause values: call_rejected, normal_clearing, originator_cancel, timeout, time_limit, user_busy, not_found, no_answer, unspecified. Missed = timeout, no_answer, user_busy, originator_cancel, call_rejected. normal_clearing = answered."
+}

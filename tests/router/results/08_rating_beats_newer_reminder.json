@@ -1,0 +1,29 @@
+{
+    "ok": true,
+    "flow": "sms_router",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550145",
+    "action": "routed",
+    "target": "reviews",
+    "rule": "b:rating_reply",
+    "test_mode": true,
+    "downstream": {
+        "flow": "review_reply",
+        "action": "happy_link_resent",
+        "reason": "rating_5",
+        "ref": "KJ3",
+        "sms": {
+            "kind": "review_happy_reply",
+            "body": "Thank you, Avery! If you have a moment, here's the review link: https://example.com/review/kettle-creek"
+        },
+        "owner_alert": {
+            "subject": "Happy customer: Avery Stone",
+            "priority": "low"
+        },
+        "delivery": {
+            "mode": "test",
+            "sms": "logged_not_sent",
+            "owner_alert": "logged_not_sent"
+        }
+    }
+}

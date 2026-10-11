@@ -1,0 +1,28 @@
+{
+    "ok": true,
+    "flow": "sms_router",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550143",
+    "action": "routed",
+    "target": "missed_call",
+    "rule": "c:only_live_context",
+    "test_mode": true,
+    "downstream": {
+        "flow": "sms_reply",
+        "action": "forward_and_booking_link",
+        "reason": "booking_intent",
+        "sms": {
+            "kind": "booking_link_reply",
+            "body": "Thanks! You can pick a time here: https://example.com/book/kettle-creek Or just reply with a day and time that works and we'll confirm."
+        },
+        "owner_alert": {
+            "subject": "New text reply from +15555550143",
+            "priority": "high"
+        },
+        "delivery": {
+            "mode": "test",
+            "sms": "logged_not_sent",
+            "owner_alert": "logged_not_sent"
+        }
+    }
+}

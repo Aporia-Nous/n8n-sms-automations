@@ -1,0 +1,9 @@
+{
+  "kettle-creek-auto": {
+    "+15555550145": {
+      "at": "2026-11-10T17:00:00.000Z",
+      "keyword": "CANCEL",
+      "via": "sms_router"
+    }
+  }
+}

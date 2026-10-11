@@ -1,0 +1,21 @@
+{
+    "ok": true,
+    "flow": "sms_reply",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550134",
+    "action": "forward",
+    "reason": "normal_reply",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": {
+        "subject": "New text reply from +15555550134",
+        "priority": "high"
+    },
+    "llm_used": false,
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "logged_not_sent"
+    }
+}

@@ -1,0 +1,15 @@
+01_normal_missed_call -> text | missed_in_hours | sms: missed_call_text_back | owner_alert: True
+02_duplicate_within_window -> skip | duplicate_within_24h | sms: None | owner_alert: False
+03_after_hours -> text | missed_after_hours | sms: missed_call_text_back | owner_alert: True
+04_stop_reply -> opt_out | stop_keyword:STOP | sms: stop_confirmation | owner_alert: True
+05_opted_out_caller -> skip | opted_out | sms: None | owner_alert: True
+06_normal_reply_booking -> forward_and_booking_link | booking_intent | sms: booking_link_reply | owner_alert: True
+07_help_reply -> help | help_keyword:HELP | sms: help_reply | owner_alert: False
+08_plain_reply_no_booking -> forward | normal_reply | sms: None | owner_alert: True
+09_twilio_dial_no_answer -> text | missed_in_hours | sms: missed_call_text_back | owner_alert: True
+10_telnyx_hangup_timeout -> text | missed_after_hours | sms: missed_call_text_back | owner_alert: True
+11_votel_call_ended -> text | missed_in_hours | sms: missed_call_text_back | owner_alert: True
+12_answered_call_ignored -> skip | not_missed:answered | sms: None | owner_alert: False
+13_twilio_inbound_sms_stop -> opt_out | stop_keyword:UNSUBSCRIBE | sms: stop_confirmation | owner_alert: True
+14_live_mode_send_nodes_disabled -> text | missed_in_hours | sms: missed_call_text_back | owner_alert: True
+Saved responses to /data/n8n-flows/tests/results and logs to /data/n8n-flows/tests

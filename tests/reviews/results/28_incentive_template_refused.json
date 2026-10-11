@@ -1,0 +1,22 @@
+{
+    "ok": true,
+    "flow": "review_queue",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550140",
+    "action": "skip",
+    "reason": "template_contains_incentive:request",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": {
+        "subject": "Review texts paused: template offers an incentive",
+        "priority": "high"
+    },
+    "llm_used": false,
+    "ref": "J9",
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "logged_not_sent"
+    }
+}

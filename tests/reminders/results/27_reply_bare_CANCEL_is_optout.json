@@ -1,0 +1,29 @@
+{
+    "ok": true,
+    "flow": "reminder_reply",
+    "source": "generic",
+    "business_id": "bright-paws-grooming",
+    "from": "+15555550116",
+    "action": "opt_out",
+    "reason": "stop_keyword:CANCEL",
+    "test_mode": true,
+    "sms": {
+        "to": "+15555550116",
+        "from": "+15555550110",
+        "kind": "stop_confirmation",
+        "body": "Bright Paws Grooming: you're unsubscribed and won't get more texts from us. Reply START to resubscribe.",
+        "segments": 1,
+        "encoding": "GSM-7"
+    },
+    "owner_alert": {
+        "subject": "Opt-out + possible cancellation: Dana Cruz",
+        "priority": "high"
+    },
+    "llm_used": false,
+    "ref": "A6",
+    "delivery": {
+        "mode": "test",
+        "sms": "logged_not_sent",
+        "owner_alert": "logged_not_sent"
+    }
+}

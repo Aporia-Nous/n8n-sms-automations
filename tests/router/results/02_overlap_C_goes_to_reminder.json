@@ -1,0 +1,26 @@
+{
+    "ok": true,
+    "flow": "sms_router",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550141",
+    "action": "routed",
+    "target": "reminders",
+    "rule": "a:reminder_intent",
+    "test_mode": true,
+    "downstream": {
+        "flow": "reminder_reply",
+        "action": "confirmed",
+        "reason": "confirm_keyword:C",
+        "ref": "K1",
+        "sms": {
+            "kind": "confirm_reply",
+            "body": "Thanks Jordan, you're confirmed for tomorrow at 2 PM."
+        },
+        "owner_alert": null,
+        "delivery": {
+            "mode": "test",
+            "sms": "logged_not_sent",
+            "owner_alert": "none"
+        }
+    }
+}

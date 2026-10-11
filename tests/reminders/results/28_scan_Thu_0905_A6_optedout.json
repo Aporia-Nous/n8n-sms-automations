@@ -1,0 +1,24 @@
+[
+    {
+        "ok": true,
+        "flow": "reminder",
+        "source": "run_webhook",
+        "business_id": "bright-paws-grooming",
+        "from": "+15555550116",
+        "action": "skip",
+        "reason": "2h:opted_out",
+        "test_mode": true,
+        "sms": null,
+        "owner_alert": {
+            "subject": "No reminder sent: Dana Cruz opted out",
+            "priority": "low"
+        },
+        "llm_used": false,
+        "ref": "A6",
+        "delivery": {
+            "mode": "test",
+            "sms": "none",
+            "owner_alert": "logged_not_sent"
+        }
+    }
+]

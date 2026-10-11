@@ -1,0 +1,24 @@
+[
+    {
+        "ok": true,
+        "flow": "review_request",
+        "source": "run_webhook",
+        "business_id": "kettle-creek-auto",
+        "from": "+15555550138",
+        "action": "deferred",
+        "reason": "request:outside_business_or_quiet_hours",
+        "test_mode": true,
+        "sms": null,
+        "owner_alert": null,
+        "llm_used": false,
+        "ref": "J8",
+        "detail": {
+            "next_try_after": "2026-11-19T14:00:00.000Z"
+        },
+        "delivery": {
+            "mode": "test",
+            "sms": "none",
+            "owner_alert": "none"
+        }
+    }
+]

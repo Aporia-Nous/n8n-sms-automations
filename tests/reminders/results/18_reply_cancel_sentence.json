@@ -1,0 +1,29 @@
+{
+    "ok": true,
+    "flow": "reminder_reply",
+    "source": "generic",
+    "business_id": "bright-paws-grooming",
+    "from": "+15555550113",
+    "action": "cancel_requested",
+    "reason": "cancel_in_message",
+    "test_mode": true,
+    "sms": {
+        "to": "+15555550113",
+        "from": "+15555550110",
+        "kind": "cancel_ack",
+        "body": "Got it, Priya. We've told the team you want to cancel tomorrow at 9:30 AM. They'll confirm shortly.",
+        "segments": 1,
+        "encoding": "GSM-7"
+    },
+    "owner_alert": {
+        "subject": "Cancellation request: Priya Shah",
+        "priority": "high"
+    },
+    "llm_used": false,
+    "ref": "A3",
+    "delivery": {
+        "mode": "test",
+        "sms": "logged_not_sent",
+        "owner_alert": "logged_not_sent"
+    }
+}

@@ -1,0 +1,9 @@
+{
+  "from": "+15555550123",
+  "to": "+15555550100",
+  "business_id": "kettle-creek-auto",
+  "timestamp": "2026-10-08T15:10:00-05:00",
+  "call_status": "no_answer",
+  "call_id": "optional-your-id",
+  "caller_name": "optional"
+}

@@ -1,0 +1,25 @@
+{
+    "ok": true,
+    "flow": "sms_router",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550148",
+    "action": "forward_to_owner",
+    "reason": "no_context_unknown_number",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": {
+        "subject": "Text from +15555550148",
+        "priority": "normal"
+    },
+    "llm_used": false,
+    "detail": {
+        "rule": "",
+        "contexts": []
+    },
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "logged_not_sent"
+    }
+}

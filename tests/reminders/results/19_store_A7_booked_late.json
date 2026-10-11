@@ -1,0 +1,24 @@
+{
+    "ok": true,
+    "flow": "appointment_upsert",
+    "source": "generic",
+    "business_id": "bright-paws-grooming",
+    "from": "+15555550117",
+    "action": "stored",
+    "reason": "reminders scheduled",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": null,
+    "llm_used": false,
+    "ref": "A7",
+    "detail": {
+        "start": "2026-11-10T23:00:00.000Z",
+        "status": "booked",
+        "local": "today at 5 PM",
+        "reminders_planned": [
+            "24h before",
+            "2h before"
+        ]
+    },
+    "delivery": null
+}

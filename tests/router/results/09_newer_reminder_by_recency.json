@@ -1,0 +1,26 @@
+{
+    "ok": true,
+    "flow": "sms_router",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550145",
+    "action": "routed",
+    "target": "reminders",
+    "rule": "c:most_recent (1140 min newer than reviews)",
+    "test_mode": true,
+    "downstream": {
+        "flow": "reminder_reply",
+        "action": "forward",
+        "reason": "other_reply",
+        "ref": "K2",
+        "sms": null,
+        "owner_alert": {
+            "subject": "Reply from Avery Stone",
+            "priority": "normal"
+        },
+        "delivery": {
+            "mode": "test",
+            "sms": "none",
+            "owner_alert": "logged_not_sent"
+        }
+    }
+}

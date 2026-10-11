@@ -1,0 +1,26 @@
+--- seeding context through the automations ---
+S1_missed_Taylor_Nov2 -> missed_call:text(missed_in_hours) sms=missed_call_text_back +alert:normal
+S2_missed_Riley_Mon1000 -> missed_call:text(missed_in_hours) sms=missed_call_text_back +alert:normal
+S3_missed_Casey_Mon1500 -> missed_call:text(missed_in_hours) sms=missed_call_text_back +alert:normal
+S4_reminders_Mon1405_Jordan24h -> reminder:send_reminder(24h_reminder) sms=reminder_24h
+S5_reviews_Mon1505_three -> review_request:send_request(review_request_due) sms=review_request
+S6_reminders_Tue1005_Avery24h -> reminder:send_reminder(24h_reminder) sms=reminder_24h
+--- replies through the router ---
+01_overlap_most_recent_review -> ROUTED to reviews [c:most_recent (60 min newer than reminders)] -> happy_link_resent(positive_words) sms=review_happy_reply +alert:low
+02_overlap_C_goes_to_reminder -> ROUTED to reminders [a:reminder_intent] -> confirmed(confirm_keyword:C) sms=confirm_reply
+03_tie_missedcall_review_5min -> sms_router:forward_to_owner(unclear_tie:reviews+missed_call within 5 min) +alert:normal
+04_missed_call_only_booking -> ROUTED to missed_call [c:only_live_context] -> forward_and_booking_link(booking_intent) sms=booking_link_reply +alert:high
+05_telnyx_format_missed_call -> ROUTED to missed_call [c:only_live_context] -> forward(normal_reply) +alert:high
+06_stale_missed_call_7_days -> sms_router:forward_to_owner(stale_context_only) +alert:normal
+07_unknown_number -> sms_router:forward_to_owner(no_context_unknown_number) +alert:normal
+08_rating_beats_newer_reminder -> ROUTED to reviews [b:rating_reply] -> happy_link_resent(rating_5) sms=review_happy_reply +alert:low
+09_newer_reminder_by_recency -> ROUTED to reminders [c:most_recent (1140 min newer than reviews)] -> forward(other_reply) +alert:normal
+10_running_late_to_reminder -> ROUTED to reminders [a:reminder_intent] -> running_late(late_in_message) sms=late_ack +alert:high
+11_reminder_stale_after_appt -> ROUTED to reviews [c:only_live_context] -> forward(already_replied_once) +alert:normal
+12_twilio_STOP_central -> sms_router:opt_out(stop_keyword:STOP) sms=stop_confirmation +alert:low
+13_opted_out_missed_call_skipped -> missed_call:skip(opted_out) +alert:normal
+14_START_central -> sms_router:opt_in(start_keyword:START) sms=start_confirmation
+15_HELP_central -> sms_router:help(help_keyword:HELP) sms=help_reply
+16_bare_CANCEL_with_reminder -> sms_router:opt_out(stop_keyword:CANCEL) sms=stop_confirmation +alert:high
+17_stale_review_8_days -> sms_router:forward_to_owner(stale_context_only) +alert:normal
+Saved to /data/n8n-flows/tests/router

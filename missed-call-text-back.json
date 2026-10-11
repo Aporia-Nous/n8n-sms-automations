@@ -1,0 +1,625 @@
+{
+  "id": "MissedCallTxtBk1",
+  "name": "Missed-Call Text-Back (template)",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "missed-call",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "id": "9d88c1e9-dcd0-5a7a-b6ac-80eadb4eb327",
+      "name": "Missed Call Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "be964b15-ec54-5400-8bd2-cb1c54ee1856",
+      "notes": "POST a call-ended event here (generic JSON, Twilio form post, Telnyx call.hangup, or Votel webhook step).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize Call Event\n// Accepts a generic, Twilio, Telnyx or Votel \"call ended\" payload and turns it into one shape:\n// { flow, source, from, to, business_id, timestamp, call_status, call_status_raw, is_missed, call_id, caller_name }\nconst DATA_DIR = '/data/n8n-flows/data'; // change this if you move the data folder\n\nconst toE164 = (p) => {\n  if (p === undefined || p === null) return '';\n  let s = String(p).trim();\n  if (s.startsWith('sip:')) s = s.slice(4).split('@')[0];\n  const plus = s.startsWith('+');\n  const digits = s.replace(/\\D/g, '');\n  if (!digits) return '';\n  if (plus) return '+' + digits;\n  if (digits.length === 10) return '+1' + digits;\n  if (digits.length === 11 && digits.startsWith('1')) return '+' + digits;\n  return '+' + digits;\n};\n\nconst MISSED = new Set(['missed', 'no_answer', 'no-answer', 'noanswer', 'unanswered', 'busy', 'user_busy',\n  'voicemail', 'canceled', 'cancelled', 'originator_cancel', 'failed', 'declined', 'call_rejected', 'timeout']);\nconst ANSWERED = new Set(['answered', 'completed', 'normal_clearing', 'in-progress', 'in_progress']);\n\nconst out = [];\nfor (const item of $input.all()) {\n  const req = item.json || {};\n  const b = req.body || {};\n  const q = req.query || {};\n  const h = req.headers || {};\n  let ev = { source: 'generic' };\n\n  if (b.CallSid || b.AccountSid) {\n    // Twilio: <Dial action=\"...\"> callback (DialCallStatus) or a call status callback (CallStatus). Form-encoded.\n    ev = {\n      source: 'twilio',\n      from: b.From || b.Caller,\n      to: b.To || b.Called,\n      call_status_raw: b.DialCallStatus || b.CallStatus,\n      timestamp: b.Timestamp,\n      call_id: b.CallSid,\n      direction: b.Direction,\n      caller_name: b.CallerName,\n      business_id: q.business_id,\n    };\n  } else if (b.data && b.data.event_type) {\n    // Telnyx Call Control webhook. Only call.hangup is meaningful here.\n    const p = b.data.payload || {};\n    ev = {\n      source: 'telnyx',\n      event_type: b.data.event_type,\n      from: p.from,\n      to: p.to,\n      call_status_raw: b.data.event_type === 'call.hangup' ? p.hangup_cause : 'ignored:' + b.data.event_type,\n      timestamp: b.data.occurred_at,\n      call_id: p.call_session_id || p.call_control_id,\n      direction: p.direction,\n      business_id: q.business_id,\n    };\n  } else if (b.source === 'votel' || b.call) {\n    // Votel: call_ended trigger (statuses missed/no_answer/voicemail) -> webhook step POSTing this JSON.\n    const c = b.call || {};\n    ev = {\n      source: 'votel',\n      from: c.caller_id_number || b.from,\n      to: c.to_number || b.to,\n      call_status_raw: c.status || b.call_status || 'missed',\n      timestamp: b.timestamp,\n      call_id: c.id || b.call_id,\n      caller_name: c.caller_id_name,\n      business_id: b.business_id || q.business_id,\n    };\n  } else {\n    ev = {\n      source: 'generic',\n      from: b.from,\n      to: b.to,\n      call_status_raw: b.call_status,\n      timestamp: b.timestamp,\n      call_id: b.call_id,\n      direction: b.direction,\n      caller_name: b.caller_name,\n      business_id: b.business_id || q.business_id,\n    };\n  }\n\n  const raw = String(ev.call_status_raw || '').toLowerCase().trim();\n  let call_status = 'unknown';\n  if (MISSED.has(raw)) call_status = raw === 'voicemail' ? 'voicemail' : 'missed';\n  else if (ANSWERED.has(raw)) call_status = 'answered';\n\n  const t = ev.timestamp ? new Date(ev.timestamp) : new Date();\n  const ts = isNaN(t.getTime()) ? new Date() : t;\n\n  const presented = String(h['x-webhook-token'] || q.token || '');\n  out.push({\n    json: {\n      flow: 'missed_call',\n      data_dir: DATA_DIR,\n      source: ev.source,\n      event_type: ev.event_type || 'call_ended',\n      from: toE164(ev.from),\n      to: toE164(ev.to),\n      business_id: ev.business_id ? String(ev.business_id) : '',\n      timestamp: ts.toISOString(),\n      call_status,\n      call_status_raw: raw,\n      is_missed: call_status === 'missed' || call_status === 'voicemail',\n      call_id: ev.call_id || '',\n      caller_name: ev.caller_name || '',\n      // the token itself is never stored or logged, only its hash for comparison\n      _token_sha256: presented ? require('crypto').createHash('sha256').update(presented).digest('hex') : '',\n    },\n  });\n}\nreturn out;\n"
+      },
+      "id": "67ade119-0069-50ca-a11f-089754b0abc4",
+      "name": "Normalize Call Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Rules: business lookup, missed-call filter, opt-out list, business hours, dedupe window.\n// Output action: 'text' (send the text-back) or 'skip' (with a reason). Owner alert is prepared here too.\n// ---- shared helpers (copied into each Code node that needs them) ----\nconst fs = require('fs');\nconst path = require('path');\nconst crypto = require('crypto');\nconst readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };\nconst writeJson = (f, o) => { fs.writeFileSync(f + '.tmp', JSON.stringify(o, null, 2)); fs.renameSync(f + '.tmp', f); };\nconst DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];\nconst DAYNAMES = { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday' };\nfunction localParts(date, tz) {\n  const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit' });\n  const p = Object.fromEntries(f.formatToParts(date).map((x) => [x.type, x.value]));\n  const hour = p.hour === '24' ? '00' : p.hour;\n  return { day: p.weekday.toLowerCase().slice(0, 3), hhmm: hour + ':' + p.minute, ymd: `${p.year}-${p.month}-${p.day}` };\n}\nfunction fmt12(hhmm) { let [h, m] = hhmm.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return m ? `${h}:${String(m).padStart(2, '0')} ${ap}` : `${h} ${ap}`; }\nfunction addDaysYmd(ymd, n) { const d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }\nfunction hoursStatus(date, biz) {\n  const tz = biz.timezone || 'America/Chicago';\n  const lp = localParts(date, tz);\n  const hours = biz.hours || {};\n  const closed = new Set(biz.closed_dates || []);\n  const today = hours[lp.day];\n  const open = !closed.has(lp.ymd) && Array.isArray(today) && lp.hhmm >= today[0] && lp.hhmm < today[1];\n  let next_open = 'soon';\n  const di = DAYS.indexOf(lp.day);\n  for (let i = 0; i < 8; i++) {\n    const d = DAYS[(di + i) % 7];\n    const w = hours[d];\n    if (closed.has(addDaysYmd(lp.ymd, i))) continue;\n    if (!Array.isArray(w)) continue;\n    if (i === 0 && lp.hhmm >= w[0]) continue;\n    next_open = (i === 0 ? 'today' : i === 1 ? 'tomorrow' : DAYNAMES[d]) + ' at ' + fmt12(w[0]);\n    break;\n  }\n  return { open, local_day: lp.day, local_time: lp.hhmm, local_date: lp.ymd, timezone: tz, next_open };\n}\nfunction render(tpl, vars) { return String(tpl || '').replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (_, k) => (vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : '')).replace(/\\s+/g, ' ').trim(); }\nconst GSM = \"@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\\n\u00d8\u00f8\\r\u00c5\u00e5\u0394_\u03a6\u0393\u039b\u03a9\u03a0\u03a8\u03a3\u0398\u039e\\x1b\u00c6\u00e6\u00df\u00c9 !\\\"#\u00a4%&'()*+,-./0123456789:;<=>?\u00a1ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00d1\u00dc\u00a7\u00bfabcdefghijklmnopqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0^{}\\\\[~]|\u20ac\";\nfunction segments(text) { const s = String(text || ''); const gsm = [...s].every((c) => GSM.includes(c)); const len = gsm ? [...s].reduce((n, c) => n + ('^{}\\\\[~]|\u20ac'.includes(c) ? 2 : 1), 0) : [...s].length; const single = gsm ? 160 : 70; const multi = gsm ? 153 : 67; return { encoding: gsm ? 'GSM-7' : 'UCS-2', chars: len, segments: len <= single ? 1 : Math.ceil(len / multi) }; }\nfunction findBusiness(cfg, business_id, number) {\n  const bs = cfg.businesses || {};\n  if (business_id && bs[business_id]) return [business_id, bs[business_id]];\n  for (const [id, b] of Object.entries(bs)) if ((b.numbers || []).includes(number)) return [id, b];\n  return [null, null];\n}\nfunction tokenOk(settings, sha) { const t = settings.webhook_token; if (!t) return true; return sha === crypto.createHash('sha256').update(String(t)).digest('hex'); }\n// ---- end helpers ----\n// ---- scheduling + keyword helpers (reminders / reviews) ----\nfunction inQuiet(hhmm, q) { if (!Array.isArray(q) || q.length !== 2) return false; const [a, b] = q; return a < b ? (hhmm >= a && hhmm < b) : (hhmm >= a || hhmm < b); }\nfunction isOpenAt(date, biz) { return hoursStatus(date, biz).open; }\nfunction okToText(date, biz, s, needOpen) { const lp = localParts(date, biz.timezone || 'America/Chicago'); if (inQuiet(lp.hhmm, s.quiet_hours)) return false; return needOpen ? isOpenAt(date, biz) : true; }\nfunction nextOkTime(date, biz, s, needOpen) { let t = new Date(Math.ceil(date.getTime() / 300000) * 300000); for (let i = 0; i < 8 * 24 * 12; i++) { if (okToText(t, biz, s, needOpen)) return t; t = new Date(t.getTime() + 300000); } return null; }\nfunction fmtWhen(date, now, tz) { const lp = localParts(date, tz); const ln = localParts(now, tz); const time = fmt12(lp.hhmm); if (lp.ymd === ln.ymd) return 'today at ' + time; if (lp.ymd === addDaysYmd(ln.ymd, 1)) return 'tomorrow at ' + time; const d = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' }).format(date); return d + ' at ' + time; }\nconst KW_STOP = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'OPTOUT', 'OPT OUT', 'REVOKE'];\nconst KW_START = ['START', 'UNSTOP', 'SUBSCRIBE'];\nconst KW_HELP = ['HELP', 'INFO'];\nfunction keywordOf(text) { return String(text || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').replace(/\\s+/g, ' ').trim(); }\nfunction isOptedOut(dataDir, bizId, phone) { const o = readJson(path.join(dataDir, 'optouts.json'), {}); return !!(o[bizId] && o[bizId][phone]); }\n// Shared STOP/START/HELP handling. Returns true when the keyword was handled (ctx filled in).\nfunction handleComplianceKeyword(ctx, ev, bizId, biz, s, kw, helpTpl, vars, mk) {\n  const optFile = path.join(ev.data_dir, 'optouts.json');\n  const optouts = readJson(optFile, {});\n  const T = biz.templates || {};\n  const oa = biz.owner_alert || {};\n  if (KW_STOP.includes(kw)) {\n    optouts[bizId] = optouts[bizId] || {}; optouts[bizId][ev.from] = { at: ev.timestamp, keyword: kw, via: ctx.flow }; writeJson(optFile, optouts);\n    ctx.action = 'opt_out'; ctx.reason = 'stop_keyword:' + kw;\n    if (s.send_stop_confirmation !== false) ctx.sms = mk(render(T.stop_confirm, vars), 'stop_confirmation');\n    ctx.owner_alert = { to_email: oa.email || '', to_sms: oa.sms || '', subject: `Opt-out: ${ev.from}`, body: `${biz.name}: ${ev.from} replied ${kw} and was added to the do-not-text list (all automations).`, priority: 'low' };\n    return true;\n  }\n  if (KW_START.includes(kw)) {\n    if (optouts[bizId]) { delete optouts[bizId][ev.from]; writeJson(optFile, optouts); }\n    ctx.action = 'opt_in'; ctx.reason = 'start_keyword:' + kw; ctx.sms = mk(render(T.start_confirm, vars), 'start_confirmation');\n    return true;\n  }\n  if (KW_HELP.includes(kw)) { ctx.action = 'help'; ctx.reason = 'help_keyword:' + kw; ctx.sms = mk(render(helpTpl || T.help, vars), 'help_reply'); return true; }\n  return false;\n}\n// ---- end scheduling helpers ----\n\n\nconst out = [];\nfor (const item of $input.all()) {\n  const ev = item.json;\n  const cfg = readJson(path.join(ev.data_dir, 'config.json'), null);\n  if (!cfg) throw new Error('config.json not found or invalid in ' + ev.data_dir);\n  const [bizId, biz] = findBusiness(cfg, ev.business_id, ev.to);\n  const s = Object.assign({}, cfg.defaults || {}, biz || {});\n  const ctx = Object.assign({}, ev, {\n    business_id: bizId || ev.business_id || '',\n    business_name: biz ? biz.name : '',\n    test_mode: s.test_mode !== false,\n    provider: s.provider || 'test',\n    llm: Object.assign({ enabled: false }, s.llm || {}),\n    action: 'skip', reason: '', template_key: '', sms: null, owner_alert: null, hours: null,\n  });\n  delete ctx._token_sha256;\n  const skip = (reason, alert) => { ctx.action = 'skip'; ctx.reason = reason; ctx.alert_owner = !!alert; };\n\n  if (!tokenOk(s, ev._token_sha256)) skip('bad_webhook_token');\n  else if (!biz) skip('unknown_business');\n  else if (!ev.is_missed) skip('not_missed:' + (ev.call_status_raw || 'unknown'));\n  else if (!ev.from || ev.from.length < 8) skip('no_caller_number');\n  else if ((biz.ignore_numbers || []).includes(ev.from) || (biz.numbers || []).includes(ev.from)) skip('internal_number');\n  else {\n    const when = new Date(ev.timestamp);\n    ctx.hours = hoursStatus(when, biz);\n    const optouts = readJson(path.join(ev.data_dir, 'optouts.json'), {});\n    const state = readJson(path.join(ev.data_dir, 'state.json'), { texted: {}, booking_replies: {} });\n    state.texted = state.texted || {};\n    const last = ((state.texted[bizId] || {})[ev.from]) || null;\n    const windowMs = Number(s.dedupe_window_hours || 24) * 3600 * 1000;\n    if (optouts[bizId] && optouts[bizId][ev.from]) {\n      skip('opted_out', s.owner_alert_on_opted_out !== false);\n    } else if (last && Math.abs(when - new Date(last)) < windowMs) {\n      skip('duplicate_within_' + (s.dedupe_window_hours || 24) + 'h', s.owner_alert_on_duplicate === true);\n      ctx.last_texted_at = last;\n    } else if (!ctx.hours.open && s.after_hours_mode === 'skip') {\n      skip('after_hours_no_text', true);\n    } else {\n      ctx.action = 'text';\n      ctx.reason = ctx.hours.open ? 'missed_in_hours' : 'missed_after_hours';\n      ctx.template_key = ctx.hours.open ? 'in_hours' : 'after_hours';\n      ctx.alert_owner = true;\n      // reserve the dedupe slot now so a quick second call can't double-text\n      state.texted[bizId] = state.texted[bizId] || {};\n      state.texted[bizId][ev.from] = ev.timestamp;\n      writeJson(path.join(ev.data_dir, 'state.json'), state);\n    }\n  }\n\n  if (ctx.action === 'text') {\n    const vars = { business_name: biz.name, booking_link: biz.booking_link || '', next_open: ctx.hours.next_open, business_number: biz.sms_from || (biz.numbers || [])[0] || '', caller_name: ev.caller_name || '' };\n    let body = render((biz.templates || {})[ctx.template_key], vars);\n    const footer = (biz.templates || {}).opt_out_footer || 'Reply STOP to opt out.';\n    if (s.append_opt_out_footer !== false && !/\\bSTOP\\b/.test(body)) body = body + ' ' + footer;\n    ctx.sms = { to: ev.from, from: biz.sms_from || (biz.numbers || [])[0], body, kind: 'missed_call_text_back', template: ctx.template_key, footer, ...segments(body) };\n  }\n  if (biz && ctx.alert_owner) {\n    const oa = biz.owner_alert || {};\n    const local = ctx.hours ? `${DAYNAMES[ctx.hours.local_day]} ${fmt12(ctx.hours.local_time)} (${ctx.hours.timezone})` : ev.timestamp;\n    const what = ctx.action === 'text' ? 'We texted them back automatically.' : `No text sent (${ctx.reason}). Consider calling back.`;\n    ctx.owner_alert = {\n      to_email: oa.email || '', to_sms: oa.sms || '',\n      subject: `Missed call from ${ev.from}${ev.caller_name ? ' (' + ev.caller_name + ')' : ''}`,\n      body: `${biz.name}: missed call from ${ev.from} at ${local}. ${what}`,\n      priority: ctx.hours && ctx.hours.open ? 'normal' : 'low',\n    };\n  }\n  out.push({ json: ctx });\n}\nreturn out;\n"
+      },
+      "id": "8646a638-eaae-5d93-8c71-138f6f774ec5",
+      "name": "Rules: Config, Hours, Opt-out, Dedupe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "Reads data/config.json, optouts.json, state.json",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6e4dfd34-99c3-5576-a10d-4906dc5956a6",
+              "leftValue": "={{ $json.action === 'text' && $json.llm && $json.llm.enabled === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "6488a9a8-0d4d-5b91-93dd-4517faa2af1c",
+      "name": "LLM personalization on?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 120, temperature: 0.4, messages: [ { role: 'system', content: 'Rewrite this missed-call text for a small business so it sounds warm and human. Keep it under 300 characters, keep the booking link exactly, no emojis, no promises about prices or times.' }, { role: 'user', content: 'Business: ' + $json.business_name + '\\nCaller name (may be blank): ' + ($json.caller_name || '') + '\\nDraft: ' + $json.sms.body } ] }) }}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "id": "5a5c0fd7-9445-547a-82d7-ccf305cfb96e",
+      "name": "LLM Personalize (OpenAI-compatible)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        -120
+      ],
+      "disabled": true,
+      "onError": "continueRegularOutput",
+      "notes": "DISABLED by default (no paid API calls). Point at any OpenAI-compatible endpoint, add a Header Auth credential, then enable and set llm.enabled=true in config.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Apply LLM text (only used when llm.enabled = true).\n// If the LLM node is disabled, errored, or returned something unusable, keep the template text.\n// Guardrails: keep STOP language and booking link, cap length.\n// ---- shared helpers (copied into each Code node that needs them) ----\nconst fs = require('fs');\nconst path = require('path');\nconst crypto = require('crypto');\nconst readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };\nconst writeJson = (f, o) => { fs.writeFileSync(f + '.tmp', JSON.stringify(o, null, 2)); fs.renameSync(f + '.tmp', f); };\nconst DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];\nconst DAYNAMES = { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday' };\nfunction localParts(date, tz) {\n  const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit' });\n  const p = Object.fromEntries(f.formatToParts(date).map((x) => [x.type, x.value]));\n  const hour = p.hour === '24' ? '00' : p.hour;\n  return { day: p.weekday.toLowerCase().slice(0, 3), hhmm: hour + ':' + p.minute, ymd: `${p.year}-${p.month}-${p.day}` };\n}\nfunction fmt12(hhmm) { let [h, m] = hhmm.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return m ? `${h}:${String(m).padStart(2, '0')} ${ap}` : `${h} ${ap}`; }\nfunction addDaysYmd(ymd, n) { const d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }\nfunction hoursStatus(date, biz) {\n  const tz = biz.timezone || 'America/Chicago';\n  const lp = localParts(date, tz);\n  const hours = biz.hours || {};\n  const closed = new Set(biz.closed_dates || []);\n  const today = hours[lp.day];\n  const open = !closed.has(lp.ymd) && Array.isArray(today) && lp.hhmm >= today[0] && lp.hhmm < today[1];\n  let next_open = 'soon';\n  const di = DAYS.indexOf(lp.day);\n  for (let i = 0; i < 8; i++) {\n    const d = DAYS[(di + i) % 7];\n    const w = hours[d];\n    if (closed.has(addDaysYmd(lp.ymd, i))) continue;\n    if (!Array.isArray(w)) continue;\n    if (i === 0 && lp.hhmm >= w[0]) continue;\n    next_open = (i === 0 ? 'today' : i === 1 ? 'tomorrow' : DAYNAMES[d]) + ' at ' + fmt12(w[0]);\n    break;\n  }\n  return { open, local_day: lp.day, local_time: lp.hhmm, local_date: lp.ymd, timezone: tz, next_open };\n}\nfunction render(tpl, vars) { return String(tpl || '').replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (_, k) => (vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : '')).replace(/\\s+/g, ' ').trim(); }\nconst GSM = \"@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\\n\u00d8\u00f8\\r\u00c5\u00e5\u0394_\u03a6\u0393\u039b\u03a9\u03a0\u03a8\u03a3\u0398\u039e\\x1b\u00c6\u00e6\u00df\u00c9 !\\\"#\u00a4%&'()*+,-./0123456789:;<=>?\u00a1ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00d1\u00dc\u00a7\u00bfabcdefghijklmnopqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0^{}\\\\[~]|\u20ac\";\nfunction segments(text) { const s = String(text || ''); const gsm = [...s].every((c) => GSM.includes(c)); const len = gsm ? [...s].reduce((n, c) => n + ('^{}\\\\[~]|\u20ac'.includes(c) ? 2 : 1), 0) : [...s].length; const single = gsm ? 160 : 70; const multi = gsm ? 153 : 67; return { encoding: gsm ? 'GSM-7' : 'UCS-2', chars: len, segments: len <= single ? 1 : Math.ceil(len / multi) }; }\nfunction findBusiness(cfg, business_id, number) {\n  const bs = cfg.businesses || {};\n  if (business_id && bs[business_id]) return [business_id, bs[business_id]];\n  for (const [id, b] of Object.entries(bs)) if ((b.numbers || []).includes(number)) return [id, b];\n  return [null, null];\n}\nfunction tokenOk(settings, sha) { const t = settings.webhook_token; if (!t) return true; return sha === crypto.createHash('sha256').update(String(t)).digest('hex'); }\n// ---- end helpers ----\n// ---- scheduling + keyword helpers (reminders / reviews) ----\nfunction inQuiet(hhmm, q) { if (!Array.isArray(q) || q.length !== 2) return false; const [a, b] = q; return a < b ? (hhmm >= a && hhmm < b) : (hhmm >= a || hhmm < b); }\nfunction isOpenAt(date, biz) { return hoursStatus(date, biz).open; }\nfunction okToText(date, biz, s, needOpen) { const lp = localParts(date, biz.timezone || 'America/Chicago'); if (inQuiet(lp.hhmm, s.quiet_hours)) return false; return needOpen ? isOpenAt(date, biz) : true; }\nfunction nextOkTime(date, biz, s, needOpen) { let t = new Date(Math.ceil(date.getTime() / 300000) * 300000); for (let i = 0; i < 8 * 24 * 12; i++) { if (okToText(t, biz, s, needOpen)) return t; t = new Date(t.getTime() + 300000); } return null; }\nfunction fmtWhen(date, now, tz) { const lp = localParts(date, tz); const ln = localParts(now, tz); const time = fmt12(lp.hhmm); if (lp.ymd === ln.ymd) return 'today at ' + time; if (lp.ymd === addDaysYmd(ln.ymd, 1)) return 'tomorrow at ' + time; const d = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' }).format(date); return d + ' at ' + time; }\nconst KW_STOP = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'OPTOUT', 'OPT OUT', 'REVOKE'];\nconst KW_START = ['START', 'UNSTOP', 'SUBSCRIBE'];\nconst KW_HELP = ['HELP', 'INFO'];\nfunction keywordOf(text) { return String(text || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').replace(/\\s+/g, ' ').trim(); }\nfunction isOptedOut(dataDir, bizId, phone) { const o = readJson(path.join(dataDir, 'optouts.json'), {}); return !!(o[bizId] && o[bizId][phone]); }\n// Shared STOP/START/HELP handling. Returns true when the keyword was handled (ctx filled in).\nfunction handleComplianceKeyword(ctx, ev, bizId, biz, s, kw, helpTpl, vars, mk) {\n  const optFile = path.join(ev.data_dir, 'optouts.json');\n  const optouts = readJson(optFile, {});\n  const T = biz.templates || {};\n  const oa = biz.owner_alert || {};\n  if (KW_STOP.includes(kw)) {\n    optouts[bizId] = optouts[bizId] || {}; optouts[bizId][ev.from] = { at: ev.timestamp, keyword: kw, via: ctx.flow }; writeJson(optFile, optouts);\n    ctx.action = 'opt_out'; ctx.reason = 'stop_keyword:' + kw;\n    if (s.send_stop_confirmation !== false) ctx.sms = mk(render(T.stop_confirm, vars), 'stop_confirmation');\n    ctx.owner_alert = { to_email: oa.email || '', to_sms: oa.sms || '', subject: `Opt-out: ${ev.from}`, body: `${biz.name}: ${ev.from} replied ${kw} and was added to the do-not-text list (all automations).`, priority: 'low' };\n    return true;\n  }\n  if (KW_START.includes(kw)) {\n    if (optouts[bizId]) { delete optouts[bizId][ev.from]; writeJson(optFile, optouts); }\n    ctx.action = 'opt_in'; ctx.reason = 'start_keyword:' + kw; ctx.sms = mk(render(T.start_confirm, vars), 'start_confirmation');\n    return true;\n  }\n  if (KW_HELP.includes(kw)) { ctx.action = 'help'; ctx.reason = 'help_keyword:' + kw; ctx.sms = mk(render(helpTpl || T.help, vars), 'help_reply'); return true; }\n  return false;\n}\n// ---- end scheduling helpers ----\n\n\nconst out = [];\nconst items = $input.all();\nfor (let i = 0; i < items.length; i++) {\n  const ctx = JSON.parse(JSON.stringify($('LLM personalization on?').all(0)[i].json));\n  const r = items[i].json || {};\n  let text = '';\n  try { text = (r.choices && r.choices[0] && (r.choices[0].message || {}).content) || r.text || ''; } catch (e) { text = ''; }\n  text = String(text || '').replace(/\\s+/g, ' ').trim();\n  const max = Number((ctx.llm || {}).max_chars || 320);\n  if (!text || text.length > max) {\n    ctx.llm_used = false; ctx.llm_note = text ? 'llm text too long, kept template' : 'no llm response (node disabled or failed), kept template';\n  } else {\n    if (ctx.sms.footer && !/\\bSTOP\\b/.test(text)) text += ' ' + ctx.sms.footer;\n    ctx.sms = Object.assign({}, ctx.sms, { body: text, template: 'llm' }, segments(text));\n    ctx.llm_used = true;\n  }\n  out.push({ json: ctx });\n}\nreturn out;\n"
+      },
+      "id": "4f3b5705-19a7-5b66-89eb-38b6032858df",
+      "name": "Apply LLM Text (with guardrails)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sms-reply",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "id": "f8796756-fd7f-5407-897d-0f27e3cc0f70",
+      "name": "SMS Reply Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        360
+      ],
+      "webhookId": "c4c829af-a549-5420-b22f-086806cc2599",
+      "notes": "Point the client number's inbound-SMS webhook here.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize Inbound SMS (reply from a caller)\n// Accepts Twilio (form-encoded From/To/Body), Telnyx (message.received) or generic {from,to,text,business_id}.\nconst DATA_DIR = '/data/n8n-flows/data'; // change this if you move the data folder\nconst toE164 = (p) => {\n  if (p === undefined || p === null) return '';\n  const s = String(p).trim(); const plus = s.startsWith('+'); const d = s.replace(/\\D/g, '');\n  if (!d) return ''; if (plus) return '+' + d; if (d.length === 10) return '+1' + d; if (d.length === 11 && d.startsWith('1')) return '+' + d; return '+' + d;\n};\nconst out = [];\nfor (const item of $input.all()) {\n  const req = item.json || {}; const b = req.body || {}; const q = req.query || {}; const h = req.headers || {};\n  let m;\n  if (b.MessageSid || b.SmsSid) m = { source: 'twilio', from: b.From, to: b.To, text: b.Body, id: b.MessageSid || b.SmsSid, business_id: q.business_id };\n  else if (b.data && b.data.event_type) {\n    const p = b.data.payload || {};\n    m = { source: 'telnyx', event_type: b.data.event_type, from: (p.from || {}).phone_number, to: ((p.to || [])[0] || {}).phone_number, text: p.text, id: p.id, timestamp: b.data.occurred_at, business_id: q.business_id };\n  } else m = { source: b.source || 'generic', from: b.from, to: b.to, text: b.text || b.body, id: b.message_id, timestamp: b.timestamp, business_id: b.business_id || q.business_id };\n  const t = m.timestamp ? new Date(m.timestamp) : new Date();\n  const presented = String(h['x-webhook-token'] || q.token || '');\n  out.push({ json: {\n    flow: 'sms_reply', data_dir: DATA_DIR, source: m.source,\n    event_type: m.event_type || 'sms_received',\n    from: toE164(m.from), to: toE164(m.to), text: String(m.text || '').trim(), message_id: m.id || '',\n    business_id: m.business_id ? String(m.business_id) : '',\n    timestamp: (isNaN(t.getTime()) ? new Date() : t).toISOString(),\n    _token_sha256: presented ? require('crypto').createHash('sha256').update(presented).digest('hex') : '',\n  } });\n}\nreturn out;\n"
+      },
+      "id": "fc7a8ac2-6e70-5693-8bb4-66e0344a1bf0",
+      "name": "Normalize Inbound SMS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle Reply: STOP / START / HELP keywords, booking-intent auto-reply, owner alert for real replies.\n// ---- shared helpers (copied into each Code node that needs them) ----\nconst fs = require('fs');\nconst path = require('path');\nconst crypto = require('crypto');\nconst readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };\nconst writeJson = (f, o) => { fs.writeFileSync(f + '.tmp', JSON.stringify(o, null, 2)); fs.renameSync(f + '.tmp', f); };\nconst DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];\nconst DAYNAMES = { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday' };\nfunction localParts(date, tz) {\n  const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit' });\n  const p = Object.fromEntries(f.formatToParts(date).map((x) => [x.type, x.value]));\n  const hour = p.hour === '24' ? '00' : p.hour;\n  return { day: p.weekday.toLowerCase().slice(0, 3), hhmm: hour + ':' + p.minute, ymd: `${p.year}-${p.month}-${p.day}` };\n}\nfunction fmt12(hhmm) { let [h, m] = hhmm.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return m ? `${h}:${String(m).padStart(2, '0')} ${ap}` : `${h} ${ap}`; }\nfunction addDaysYmd(ymd, n) { const d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }\nfunction hoursStatus(date, biz) {\n  const tz = biz.timezone || 'America/Chicago';\n  const lp = localParts(date, tz);\n  const hours = biz.hours || {};\n  const closed = new Set(biz.closed_dates || []);\n  const today = hours[lp.day];\n  const open = !closed.has(lp.ymd) && Array.isArray(today) && lp.hhmm >= today[0] && lp.hhmm < today[1];\n  let next_open = 'soon';\n  const di = DAYS.indexOf(lp.day);\n  for (let i = 0; i < 8; i++) {\n    const d = DAYS[(di + i) % 7];\n    const w = hours[d];\n    if (closed.has(addDaysYmd(lp.ymd, i))) continue;\n    if (!Array.isArray(w)) continue;\n    if (i === 0 && lp.hhmm >= w[0]) continue;\n    next_open = (i === 0 ? 'today' : i === 1 ? 'tomorrow' : DAYNAMES[d]) + ' at ' + fmt12(w[0]);\n    break;\n  }\n  return { open, local_day: lp.day, local_time: lp.hhmm, local_date: lp.ymd, timezone: tz, next_open };\n}\nfunction render(tpl, vars) { return String(tpl || '').replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (_, k) => (vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : '')).replace(/\\s+/g, ' ').trim(); }\nconst GSM = \"@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\\n\u00d8\u00f8\\r\u00c5\u00e5\u0394_\u03a6\u0393\u039b\u03a9\u03a0\u03a8\u03a3\u0398\u039e\\x1b\u00c6\u00e6\u00df\u00c9 !\\\"#\u00a4%&'()*+,-./0123456789:;<=>?\u00a1ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00d1\u00dc\u00a7\u00bfabcdefghijklmnopqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0^{}\\\\[~]|\u20ac\";\nfunction segments(text) { const s = String(text || ''); const gsm = [...s].every((c) => GSM.includes(c)); const len = gsm ? [...s].reduce((n, c) => n + ('^{}\\\\[~]|\u20ac'.includes(c) ? 2 : 1), 0) : [...s].length; const single = gsm ? 160 : 70; const multi = gsm ? 153 : 67; return { encoding: gsm ? 'GSM-7' : 'UCS-2', chars: len, segments: len <= single ? 1 : Math.ceil(len / multi) }; }\nfunction findBusiness(cfg, business_id, number) {\n  const bs = cfg.businesses || {};\n  if (business_id && bs[business_id]) return [business_id, bs[business_id]];\n  for (const [id, b] of Object.entries(bs)) if ((b.numbers || []).includes(number)) return [id, b];\n  return [null, null];\n}\nfunction tokenOk(settings, sha) { const t = settings.webhook_token; if (!t) return true; return sha === crypto.createHash('sha256').update(String(t)).digest('hex'); }\n// ---- end helpers ----\n// ---- scheduling + keyword helpers (reminders / reviews) ----\nfunction inQuiet(hhmm, q) { if (!Array.isArray(q) || q.length !== 2) return false; const [a, b] = q; return a < b ? (hhmm >= a && hhmm < b) : (hhmm >= a || hhmm < b); }\nfunction isOpenAt(date, biz) { return hoursStatus(date, biz).open; }\nfunction okToText(date, biz, s, needOpen) { const lp = localParts(date, biz.timezone || 'America/Chicago'); if (inQuiet(lp.hhmm, s.quiet_hours)) return false; return needOpen ? isOpenAt(date, biz) : true; }\nfunction nextOkTime(date, biz, s, needOpen) { let t = new Date(Math.ceil(date.getTime() / 300000) * 300000); for (let i = 0; i < 8 * 24 * 12; i++) { if (okToText(t, biz, s, needOpen)) return t; t = new Date(t.getTime() + 300000); } return null; }\nfunction fmtWhen(date, now, tz) { const lp = localParts(date, tz); const ln = localParts(now, tz); const time = fmt12(lp.hhmm); if (lp.ymd === ln.ymd) return 'today at ' + time; if (lp.ymd === addDaysYmd(ln.ymd, 1)) return 'tomorrow at ' + time; const d = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' }).format(date); return d + ' at ' + time; }\nconst KW_STOP = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'OPTOUT', 'OPT OUT', 'REVOKE'];\nconst KW_START = ['START', 'UNSTOP', 'SUBSCRIBE'];\nconst KW_HELP = ['HELP', 'INFO'];\nfunction keywordOf(text) { return String(text || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').replace(/\\s+/g, ' ').trim(); }\nfunction isOptedOut(dataDir, bizId, phone) { const o = readJson(path.join(dataDir, 'optouts.json'), {}); return !!(o[bizId] && o[bizId][phone]); }\n// Shared STOP/START/HELP handling. Returns true when the keyword was handled (ctx filled in).\nfunction handleComplianceKeyword(ctx, ev, bizId, biz, s, kw, helpTpl, vars, mk) {\n  const optFile = path.join(ev.data_dir, 'optouts.json');\n  const optouts = readJson(optFile, {});\n  const T = biz.templates || {};\n  const oa = biz.owner_alert || {};\n  if (KW_STOP.includes(kw)) {\n    optouts[bizId] = optouts[bizId] || {}; optouts[bizId][ev.from] = { at: ev.timestamp, keyword: kw, via: ctx.flow }; writeJson(optFile, optouts);\n    ctx.action = 'opt_out'; ctx.reason = 'stop_keyword:' + kw;\n    if (s.send_stop_confirmation !== false) ctx.sms = mk(render(T.stop_confirm, vars), 'stop_confirmation');\n    ctx.owner_alert = { to_email: oa.email || '', to_sms: oa.sms || '', subject: `Opt-out: ${ev.from}`, body: `${biz.name}: ${ev.from} replied ${kw} and was added to the do-not-text list (all automations).`, priority: 'low' };\n    return true;\n  }\n  if (KW_START.includes(kw)) {\n    if (optouts[bizId]) { delete optouts[bizId][ev.from]; writeJson(optFile, optouts); }\n    ctx.action = 'opt_in'; ctx.reason = 'start_keyword:' + kw; ctx.sms = mk(render(T.start_confirm, vars), 'start_confirmation');\n    return true;\n  }\n  if (KW_HELP.includes(kw)) { ctx.action = 'help'; ctx.reason = 'help_keyword:' + kw; ctx.sms = mk(render(helpTpl || T.help, vars), 'help_reply'); return true; }\n  return false;\n}\n// ---- end scheduling helpers ----\n\n\nconst STOP = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'OPTOUT', 'OPT OUT', 'REVOKE'];\nconst START = ['START', 'UNSTOP', 'SUBSCRIBE'];\nconst HELP = ['HELP', 'INFO'];\nconst BOOKING = /\\b(book|booking|appointment|appt|schedule|reschedule|come in|bring (it|my|the)|drop (it )?off|available|availability|openings?|today|tomorrow|quote|estimate)\\b/i;\nconst out = [];\nfor (const item of $input.all()) {\n  const ev = item.json;\n  const cfg = readJson(path.join(ev.data_dir, 'config.json'), null);\n  if (!cfg) throw new Error('config.json not found or invalid in ' + ev.data_dir);\n  const [bizId, biz] = findBusiness(cfg, ev.business_id, ev.to);\n  const s = Object.assign({}, cfg.defaults || {}, biz || {});\n  const ctx = Object.assign({}, ev, {\n    business_id: bizId || ev.business_id || '', business_name: biz ? biz.name : '',\n    test_mode: s.test_mode !== false, provider: s.provider || 'test',\n    action: 'none', reason: '', sms: null, owner_alert: null,\n  });\n  delete ctx._token_sha256;\n  const kw = ev.text.toUpperCase().replace(/[^A-Z ]/g, '').replace(/\\s+/g, ' ').trim();\n  if (!tokenOk(s, ev._token_sha256)) { ctx.reason = 'bad_webhook_token'; out.push({ json: ctx }); continue; }\n  if (!biz) { ctx.reason = 'unknown_business'; out.push({ json: ctx }); continue; }\n  const T = biz.templates || {};\n  const vars = { business_name: biz.name, booking_link: biz.booking_link || '', business_number: biz.sms_from || (biz.numbers || [])[0] || '' };\n  const from = biz.sms_from || (biz.numbers || [])[0];\n  const mk = (body, kind) => Object.assign({ to: ev.from, from, body, kind }, segments(body));\n  const optFile = path.join(ev.data_dir, 'optouts.json');\n  const optouts = readJson(optFile, {});\n  const isOptedOut = !!(optouts[bizId] && optouts[bizId][ev.from]);\n  const oa = biz.owner_alert || {};\n  const alert = (subject, body, priority) => ({ to_email: oa.email || '', to_sms: oa.sms || '', subject, body, priority: priority || 'normal' });\n\n  if (STOP.includes(kw)) {\n    optouts[bizId] = optouts[bizId] || {};\n    optouts[bizId][ev.from] = { at: ev.timestamp, keyword: kw };\n    writeJson(optFile, optouts);\n    ctx.action = 'opt_out'; ctx.reason = 'stop_keyword:' + kw;\n    if (s.send_stop_confirmation !== false) ctx.sms = mk(render(T.stop_confirm, vars), 'stop_confirmation');\n    ctx.owner_alert = alert(`Opt-out: ${ev.from}`, `${biz.name}: ${ev.from} replied ${kw} and was added to the do-not-text list.`, 'low');\n  } else if (START.includes(kw)) {\n    if (optouts[bizId]) { delete optouts[bizId][ev.from]; writeJson(optFile, optouts); }\n    ctx.action = 'opt_in'; ctx.reason = 'start_keyword:' + kw;\n    ctx.sms = mk(render(T.start_confirm, vars), 'start_confirmation');\n  } else if (HELP.includes(kw)) {\n    ctx.action = 'help'; ctx.reason = 'help_keyword:' + kw;\n    ctx.sms = mk(render(T.help, vars), 'help_reply');\n  } else if (isOptedOut) {\n    // they opted out earlier and sent something else: no auto-text, but the owner should see it\n    ctx.action = 'forward_only'; ctx.reason = 'sender_opted_out';\n    ctx.owner_alert = alert(`Text from opted-out number ${ev.from}`, `${biz.name}: ${ev.from} (opted out, do not auto-text) wrote: \"${ev.text}\"`);\n  } else {\n    ctx.action = 'forward'; ctx.reason = 'normal_reply';\n    ctx.owner_alert = alert(`New text reply from ${ev.from}`, `${biz.name}: ${ev.from} replied: \"${ev.text}\"`, 'high');\n    const state = readJson(path.join(ev.data_dir, 'state.json'), { texted: {}, booking_replies: {} });\n    state.booking_replies = state.booking_replies || {};\n    const last = (state.booking_replies[bizId] || {})[ev.from];\n    const win = Number(s.booking_reply_window_hours || 12) * 3600 * 1000;\n    if (s.auto_reply_booking_link !== false && biz.booking_link && BOOKING.test(ev.text)) {\n      if (last && Math.abs(new Date(ev.timestamp) - new Date(last)) < win) {\n        ctx.booking_reply = 'skipped_recently_sent';\n      } else {\n        ctx.action = 'forward_and_booking_link'; ctx.reason = 'booking_intent';\n        ctx.sms = mk(render(T.booking_reply, vars), 'booking_link_reply');\n        state.booking_replies[bizId] = state.booking_replies[bizId] || {};\n        state.booking_replies[bizId][ev.from] = ev.timestamp;\n        writeJson(path.join(ev.data_dir, 'state.json'), state);\n      }\n    }\n  }\n  out.push({ json: ctx });\n}\nreturn out;\n"
+      },
+      "id": "3b79d84a-51c0-5580-84ff-e70f9eab2d63",
+      "name": "Handle Reply: STOP / HELP / Booking / Owner",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        360
+      ],
+      "notes": "Updates data/optouts.json",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6e58def9-41c4-5da4-9db7-b61ab970a850",
+              "leftValue": "={{ $json.test_mode !== false }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "af53ab2f-8ba0-5675-a71f-3064a3cdd4ee",
+      "name": "Test mode?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        120
+      ],
+      "notes": "true = log only, nothing is sent",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// TEST MODE: nothing is sent. The would-be text goes to logs/outbox.jsonl and the owner alert to\n// logs/owner-alerts.jsonl. Every decision is appended to logs/events.jsonl.\n// ---- shared helpers (copied into each Code node that needs them) ----\nconst fs = require('fs');\nconst path = require('path');\nconst crypto = require('crypto');\nconst readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };\nconst writeJson = (f, o) => { fs.writeFileSync(f + '.tmp', JSON.stringify(o, null, 2)); fs.renameSync(f + '.tmp', f); };\nconst DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];\nconst DAYNAMES = { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday' };\nfunction localParts(date, tz) {\n  const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit' });\n  const p = Object.fromEntries(f.formatToParts(date).map((x) => [x.type, x.value]));\n  const hour = p.hour === '24' ? '00' : p.hour;\n  return { day: p.weekday.toLowerCase().slice(0, 3), hhmm: hour + ':' + p.minute, ymd: `${p.year}-${p.month}-${p.day}` };\n}\nfunction fmt12(hhmm) { let [h, m] = hhmm.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return m ? `${h}:${String(m).padStart(2, '0')} ${ap}` : `${h} ${ap}`; }\nfunction addDaysYmd(ymd, n) { const d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }\nfunction hoursStatus(date, biz) {\n  const tz = biz.timezone || 'America/Chicago';\n  const lp = localParts(date, tz);\n  const hours = biz.hours || {};\n  const closed = new Set(biz.closed_dates || []);\n  const today = hours[lp.day];\n  const open = !closed.has(lp.ymd) && Array.isArray(today) && lp.hhmm >= today[0] && lp.hhmm < today[1];\n  let next_open = 'soon';\n  const di = DAYS.indexOf(lp.day);\n  for (let i = 0; i < 8; i++) {\n    const d = DAYS[(di + i) % 7];\n    const w = hours[d];\n    if (closed.has(addDaysYmd(lp.ymd, i))) continue;\n    if (!Array.isArray(w)) continue;\n    if (i === 0 && lp.hhmm >= w[0]) continue;\n    next_open = (i === 0 ? 'today' : i === 1 ? 'tomorrow' : DAYNAMES[d]) + ' at ' + fmt12(w[0]);\n    break;\n  }\n  return { open, local_day: lp.day, local_time: lp.hhmm, local_date: lp.ymd, timezone: tz, next_open };\n}\nfunction render(tpl, vars) { return String(tpl || '').replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (_, k) => (vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : '')).replace(/\\s+/g, ' ').trim(); }\nconst GSM = \"@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\\n\u00d8\u00f8\\r\u00c5\u00e5\u0394_\u03a6\u0393\u039b\u03a9\u03a0\u03a8\u03a3\u0398\u039e\\x1b\u00c6\u00e6\u00df\u00c9 !\\\"#\u00a4%&'()*+,-./0123456789:;<=>?\u00a1ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00d1\u00dc\u00a7\u00bfabcdefghijklmnopqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0^{}\\\\[~]|\u20ac\";\nfunction segments(text) { const s = String(text || ''); const gsm = [...s].every((c) => GSM.includes(c)); const len = gsm ? [...s].reduce((n, c) => n + ('^{}\\\\[~]|\u20ac'.includes(c) ? 2 : 1), 0) : [...s].length; const single = gsm ? 160 : 70; const multi = gsm ? 153 : 67; return { encoding: gsm ? 'GSM-7' : 'UCS-2', chars: len, segments: len <= single ? 1 : Math.ceil(len / multi) }; }\nfunction findBusiness(cfg, business_id, number) {\n  const bs = cfg.businesses || {};\n  if (business_id && bs[business_id]) return [business_id, bs[business_id]];\n  for (const [id, b] of Object.entries(bs)) if ((b.numbers || []).includes(number)) return [id, b];\n  return [null, null];\n}\nfunction tokenOk(settings, sha) { const t = settings.webhook_token; if (!t) return true; return sha === crypto.createHash('sha256').update(String(t)).digest('hex'); }\n// ---- end helpers ----\n// ---- scheduling + keyword helpers (reminders / reviews) ----\nfunction inQuiet(hhmm, q) { if (!Array.isArray(q) || q.length !== 2) return false; const [a, b] = q; return a < b ? (hhmm >= a && hhmm < b) : (hhmm >= a || hhmm < b); }\nfunction isOpenAt(date, biz) { return hoursStatus(date, biz).open; }\nfunction okToText(date, biz, s, needOpen) { const lp = localParts(date, biz.timezone || 'America/Chicago'); if (inQuiet(lp.hhmm, s.quiet_hours)) return false; return needOpen ? isOpenAt(date, biz) : true; }\nfunction nextOkTime(date, biz, s, needOpen) { let t = new Date(Math.ceil(date.getTime() / 300000) * 300000); for (let i = 0; i < 8 * 24 * 12; i++) { if (okToText(t, biz, s, needOpen)) return t; t = new Date(t.getTime() + 300000); } return null; }\nfunction fmtWhen(date, now, tz) { const lp = localParts(date, tz); const ln = localParts(now, tz); const time = fmt12(lp.hhmm); if (lp.ymd === ln.ymd) return 'today at ' + time; if (lp.ymd === addDaysYmd(ln.ymd, 1)) return 'tomorrow at ' + time; const d = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' }).format(date); return d + ' at ' + time; }\nconst KW_STOP = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'OPTOUT', 'OPT OUT', 'REVOKE'];\nconst KW_START = ['START', 'UNSTOP', 'SUBSCRIBE'];\nconst KW_HELP = ['HELP', 'INFO'];\nfunction keywordOf(text) { return String(text || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').replace(/\\s+/g, ' ').trim(); }\nfunction isOptedOut(dataDir, bizId, phone) { const o = readJson(path.join(dataDir, 'optouts.json'), {}); return !!(o[bizId] && o[bizId][phone]); }\n// Shared STOP/START/HELP handling. Returns true when the keyword was handled (ctx filled in).\nfunction handleComplianceKeyword(ctx, ev, bizId, biz, s, kw, helpTpl, vars, mk) {\n  const optFile = path.join(ev.data_dir, 'optouts.json');\n  const optouts = readJson(optFile, {});\n  const T = biz.templates || {};\n  const oa = biz.owner_alert || {};\n  if (KW_STOP.includes(kw)) {\n    optouts[bizId] = optouts[bizId] || {}; optouts[bizId][ev.from] = { at: ev.timestamp, keyword: kw, via: ctx.flow }; writeJson(optFile, optouts);\n    ctx.action = 'opt_out'; ctx.reason = 'stop_keyword:' + kw;\n    if (s.send_stop_confirmation !== false) ctx.sms = mk(render(T.stop_confirm, vars), 'stop_confirmation');\n    ctx.owner_alert = { to_email: oa.email || '', to_sms: oa.sms || '', subject: `Opt-out: ${ev.from}`, body: `${biz.name}: ${ev.from} replied ${kw} and was added to the do-not-text list (all automations).`, priority: 'low' };\n    return true;\n  }\n  if (KW_START.includes(kw)) {\n    if (optouts[bizId]) { delete optouts[bizId][ev.from]; writeJson(optFile, optouts); }\n    ctx.action = 'opt_in'; ctx.reason = 'start_keyword:' + kw; ctx.sms = mk(render(T.start_confirm, vars), 'start_confirmation');\n    return true;\n  }\n  if (KW_HELP.includes(kw)) { ctx.action = 'help'; ctx.reason = 'help_keyword:' + kw; ctx.sms = mk(render(helpTpl || T.help, vars), 'help_reply'); return true; }\n  return false;\n}\n// ---- end scheduling helpers ----\n\n\nconst out = [];\nfor (const item of $input.all()) {\n  const ctx = item.json;\n  const dir = path.join(ctx.data_dir, 'logs');\n  fs.mkdirSync(dir, { recursive: true });\n  const now = new Date().toISOString();\n  const append = (f, o) => fs.appendFileSync(path.join(dir, f), JSON.stringify(o) + '\\n');\n  const ex = $execution.id;\n  if (ctx.sms) append('outbox.jsonl', { logged_at: now, execution_id: ex, mode: 'TEST_NOT_SENT', business_id: ctx.business_id, provider_would_be: ctx.provider, ...ctx.sms });\n  if (ctx.owner_alert) append('owner-alerts.jsonl', { logged_at: now, execution_id: ex, mode: 'TEST_NOT_SENT', business_id: ctx.business_id, ...ctx.owner_alert });\n  append('events.jsonl', { logged_at: now, execution_id: ex, mode: 'test', flow: ctx.flow, source: ctx.source, business_id: ctx.business_id, from: ctx.from, to: ctx.to, action: ctx.action, reason: ctx.reason, text_in: ctx.text, would_send_sms: !!ctx.sms, would_alert_owner: !!ctx.owner_alert });\n  out.push({ json: Object.assign({}, ctx, { delivery: { mode: 'test', sms: ctx.sms ? 'logged_not_sent' : 'none', owner_alert: ctx.owner_alert ? 'logged_not_sent' : 'none' } }) });\n}\nreturn out;\n"
+      },
+      "id": "b14722e9-207b-5c40-9167-2073c3a66039",
+      "name": "TEST: Log Would-Be SMS + Owner Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        0
+      ],
+      "notes": "Writes data/logs/*.jsonl",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 3,
+        "output": "={{ !$json.sms ? 2 : ($json.provider === 'twilio' ? 0 : ($json.provider === 'telnyx' ? 1 : 2)) }}",
+        "options": {}
+      },
+      "id": "2a74c591-42d2-5da0-a9bf-88bcdf54de95",
+      "name": "Live: Route by Provider",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1560,
+        320
+      ],
+      "notes": "0 Twilio, 1 Telnyx, 2 no SMS / unknown provider",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resource": "sms",
+        "operation": "send",
+        "from": "={{ $json.sms.from }}",
+        "to": "={{ $json.sms.to }}",
+        "message": "={{ $json.sms.body }}",
+        "options": {}
+      },
+      "id": "0e200651-6f0a-59e8-98c9-54e9df14bf46",
+      "name": "Twilio: Send SMS",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        200
+      ],
+      "disabled": true,
+      "notes": "DISABLED. Add a Twilio credential (Account SID + Auth Token) and enable for live sends.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telnyx.com/v2/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $json.sms.from, to: $json.sms.to, text: $json.sms.body }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "b118d525-ab08-5bae-bc57-a6c0a8523920",
+      "name": "Telnyx: Send SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        360
+      ],
+      "disabled": true,
+      "notes": "DISABLED. Header Auth credential: Authorization = Bearer <Telnyx API key>. Enable for live sends.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// LIVE MODE bookkeeping: runs after the provider node (or directly when there is no SMS).\n// Note: if the Twilio/Telnyx node is still disabled, the item just passes through and nothing was sent.\n// ---- shared helpers (copied into each Code node that needs them) ----\nconst fs = require('fs');\nconst path = require('path');\nconst crypto = require('crypto');\nconst readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return d; } };\nconst writeJson = (f, o) => { fs.writeFileSync(f + '.tmp', JSON.stringify(o, null, 2)); fs.renameSync(f + '.tmp', f); };\nconst DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];\nconst DAYNAMES = { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday' };\nfunction localParts(date, tz) {\n  const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit' });\n  const p = Object.fromEntries(f.formatToParts(date).map((x) => [x.type, x.value]));\n  const hour = p.hour === '24' ? '00' : p.hour;\n  return { day: p.weekday.toLowerCase().slice(0, 3), hhmm: hour + ':' + p.minute, ymd: `${p.year}-${p.month}-${p.day}` };\n}\nfunction fmt12(hhmm) { let [h, m] = hhmm.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return m ? `${h}:${String(m).padStart(2, '0')} ${ap}` : `${h} ${ap}`; }\nfunction addDaysYmd(ymd, n) { const d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }\nfunction hoursStatus(date, biz) {\n  const tz = biz.timezone || 'America/Chicago';\n  const lp = localParts(date, tz);\n  const hours = biz.hours || {};\n  const closed = new Set(biz.closed_dates || []);\n  const today = hours[lp.day];\n  const open = !closed.has(lp.ymd) && Array.isArray(today) && lp.hhmm >= today[0] && lp.hhmm < today[1];\n  let next_open = 'soon';\n  const di = DAYS.indexOf(lp.day);\n  for (let i = 0; i < 8; i++) {\n    const d = DAYS[(di + i) % 7];\n    const w = hours[d];\n    if (closed.has(addDaysYmd(lp.ymd, i))) continue;\n    if (!Array.isArray(w)) continue;\n    if (i === 0 && lp.hhmm >= w[0]) continue;\n    next_open = (i === 0 ? 'today' : i === 1 ? 'tomorrow' : DAYNAMES[d]) + ' at ' + fmt12(w[0]);\n    break;\n  }\n  return { open, local_day: lp.day, local_time: lp.hhmm, local_date: lp.ymd, timezone: tz, next_open };\n}\nfunction render(tpl, vars) { return String(tpl || '').replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g, (_, k) => (vars[k] !== undefined && vars[k] !== null ? String(vars[k]) : '')).replace(/\\s+/g, ' ').trim(); }\nconst GSM = \"@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\\n\u00d8\u00f8\\r\u00c5\u00e5\u0394_\u03a6\u0393\u039b\u03a9\u03a0\u03a8\u03a3\u0398\u039e\\x1b\u00c6\u00e6\u00df\u00c9 !\\\"#\u00a4%&'()*+,-./0123456789:;<=>?\u00a1ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00d1\u00dc\u00a7\u00bfabcdefghijklmnopqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0^{}\\\\[~]|\u20ac\";\nfunction segments(text) { const s = String(text || ''); const gsm = [...s].every((c) => GSM.includes(c)); const len = gsm ? [...s].reduce((n, c) => n + ('^{}\\\\[~]|\u20ac'.includes(c) ? 2 : 1), 0) : [...s].length; const single = gsm ? 160 : 70; const multi = gsm ? 153 : 67; return { encoding: gsm ? 'GSM-7' : 'UCS-2', chars: len, segments: len <= single ? 1 : Math.ceil(len / multi) }; }\nfunction findBusiness(cfg, business_id, number) {\n  const bs = cfg.businesses || {};\n  if (business_id && bs[business_id]) return [business_id, bs[business_id]];\n  for (const [id, b] of Object.entries(bs)) if ((b.numbers || []).includes(number)) return [id, b];\n  return [null, null];\n}\nfunction tokenOk(settings, sha) { const t = settings.webhook_token; if (!t) return true; return sha === crypto.createHash('sha256').update(String(t)).digest('hex'); }\n// ---- end helpers ----\n// ---- scheduling + keyword helpers (reminders / reviews) ----\nfunction inQuiet(hhmm, q) { if (!Array.isArray(q) || q.length !== 2) return false; const [a, b] = q; return a < b ? (hhmm >= a && hhmm < b) : (hhmm >= a || hhmm < b); }\nfunction isOpenAt(date, biz) { return hoursStatus(date, biz).open; }\nfunction okToText(date, biz, s, needOpen) { const lp = localParts(date, biz.timezone || 'America/Chicago'); if (inQuiet(lp.hhmm, s.quiet_hours)) return false; return needOpen ? isOpenAt(date, biz) : true; }\nfunction nextOkTime(date, biz, s, needOpen) { let t = new Date(Math.ceil(date.getTime() / 300000) * 300000); for (let i = 0; i < 8 * 24 * 12; i++) { if (okToText(t, biz, s, needOpen)) return t; t = new Date(t.getTime() + 300000); } return null; }\nfunction fmtWhen(date, now, tz) { const lp = localParts(date, tz); const ln = localParts(now, tz); const time = fmt12(lp.hhmm); if (lp.ymd === ln.ymd) return 'today at ' + time; if (lp.ymd === addDaysYmd(ln.ymd, 1)) return 'tomorrow at ' + time; const d = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' }).format(date); return d + ' at ' + time; }\nconst KW_STOP = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'OPTOUT', 'OPT OUT', 'REVOKE'];\nconst KW_START = ['START', 'UNSTOP', 'SUBSCRIBE'];\nconst KW_HELP = ['HELP', 'INFO'];\nfunction keywordOf(text) { return String(text || '').toUpperCase().replace(/[^A-Z0-9 ]/g, '').replace(/\\s+/g, ' ').trim(); }\nfunction isOptedOut(dataDir, bizId, phone) { const o = readJson(path.join(dataDir, 'optouts.json'), {}); return !!(o[bizId] && o[bizId][phone]); }\n// Shared STOP/START/HELP handling. Returns true when the keyword was handled (ctx filled in).\nfunction handleComplianceKeyword(ctx, ev, bizId, biz, s, kw, helpTpl, vars, mk) {\n  const optFile = path.join(ev.data_dir, 'optouts.json');\n  const optouts = readJson(optFile, {});\n  const T = biz.templates || {};\n  const oa = biz.owner_alert || {};\n  if (KW_STOP.includes(kw)) {\n    optouts[bizId] = optouts[bizId] || {}; optouts[bizId][ev.from] = { at: ev.timestamp, keyword: kw, via: ctx.flow }; writeJson(optFile, optouts);\n    ctx.action = 'opt_out'; ctx.reason = 'stop_keyword:' + kw;\n    if (s.send_stop_confirmation !== false) ctx.sms = mk(render(T.stop_confirm, vars), 'stop_confirmation');\n    ctx.owner_alert = { to_email: oa.email || '', to_sms: oa.sms || '', subject: `Opt-out: ${ev.from}`, body: `${biz.name}: ${ev.from} replied ${kw} and was added to the do-not-text list (all automations).`, priority: 'low' };\n    return true;\n  }\n  if (KW_START.includes(kw)) {\n    if (optouts[bizId]) { delete optouts[bizId][ev.from]; writeJson(optFile, optouts); }\n    ctx.action = 'opt_in'; ctx.reason = 'start_keyword:' + kw; ctx.sms = mk(render(T.start_confirm, vars), 'start_confirmation');\n    return true;\n  }\n  if (KW_HELP.includes(kw)) { ctx.action = 'help'; ctx.reason = 'help_keyword:' + kw; ctx.sms = mk(render(helpTpl || T.help, vars), 'help_reply'); return true; }\n  return false;\n}\n// ---- end scheduling helpers ----\n\n\nconst out = [];\nconst items = $input.all();\nfor (let i = 0; i < items.length; i++) {\n  let src; try { src = $('Test mode?').itemMatching(i).json; } catch (e) { src = items[i].json; }\n  const ctx = JSON.parse(JSON.stringify(src));\n  const r = items[i].json || {};\n  const providerId = r.sid || (r.data && r.data.id) || null;\n  const dir = path.join(ctx.data_dir, 'logs'); fs.mkdirSync(dir, { recursive: true });\n  fs.appendFileSync(path.join(dir, 'events.jsonl'), JSON.stringify({ logged_at: new Date().toISOString(), execution_id: $execution.id, mode: 'live', flow: ctx.flow, business_id: ctx.business_id, from: ctx.from, action: ctx.action, reason: ctx.reason, provider: ctx.provider, provider_message_id: providerId, sms_status: providerId ? 'accepted_by_provider' : (ctx.sms ? 'NOT_SENT_no_provider_response (send node disabled or failed)' : 'none') }) + '\\n');\n  out.push({ json: Object.assign(ctx, { delivery: { mode: 'live', provider: ctx.provider, provider_message_id: providerId, sms: providerId ? 'accepted_by_provider' : (ctx.sms ? 'not_sent_no_provider_response' : 'none'), owner_alert: ctx.owner_alert ? 'email node (disabled by default)' : 'none' } }) });\n}\nreturn out;\n"
+      },
+      "id": "206c874e-608b-53de-a5d2-d5a2cd9ba100",
+      "name": "Live: Log Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2040,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "686cc15f-ee54-5103-9d40-8347c222da5f",
+              "leftValue": "={{ !!$json.owner_alert }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "b880824a-0159-59d0-99ce-b2f292042151",
+      "name": "Owner alert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2260,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@example.com",
+        "toEmail": "={{ $json.owner_alert.to_email }}",
+        "subject": "={{ $json.owner_alert.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.owner_alert.body }}",
+        "options": {}
+      },
+      "id": "e1be4efb-c048-52d2-82ed-546c10ab0d1b",
+      "name": "Owner Alert Email (SMTP)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2480,
+        240
+      ],
+      "disabled": true,
+      "notes": "DISABLED. Add SMTP credential and a real from address to email owners. (Or swap for a Twilio/Telnyx SMS to owner_alert.to_sms.)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the webhook response (what the caller of the webhook sees). No secrets in here.\nreturn $input.all().map((it, i) => {\n  let c = it.json;\n  if (!c.flow) { try { c = $('Live: Log Result').itemMatching(i).json; } catch (e) { /* keep */ } }\n  return { json: {\n    ok: true, flow: c.flow, source: c.source, business_id: c.business_id, from: c.from,\n    action: c.action, reason: c.reason, test_mode: c.test_mode,\n    hours: c.hours ? { open: c.hours.open, local: `${c.hours.local_day} ${c.hours.local_time}`, next_open: c.hours.next_open } : undefined,\n    sms: c.sms ? { to: c.sms.to, from: c.sms.from, kind: c.sms.kind, body: c.sms.body, segments: c.sms.segments, encoding: c.sms.encoding } : null,\n    owner_alert: c.owner_alert ? { subject: c.owner_alert.subject, priority: c.owner_alert.priority } : null,\n    llm_used: c.llm_used || false,\n    ref: c.ref, detail: c.detail,\n    delivery: c.delivery || null,\n  } };\n});\n"
+      },
+      "id": "60e438f7-42ab-5631-a144-9c7821e6c72a",
+      "name": "Build Webhook Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Missed-Call Text-Back (template)\nTest mode is ON by default (data/config.json -> defaults.test_mode). In test mode nothing is sent: would-be texts go to data/logs/outbox.jsonl, owner alerts to data/logs/owner-alerts.jsonl.\n\nLive sends need: a client number with A2P 10DLC registration, a provider credential, test_mode=false, provider=twilio|telnyx, and the matching send node enabled.\n\nSee README.md.",
+        "height": 260,
+        "width": 520
+      },
+      "id": "6fc5c1e1-faf1-55e1-aa69-bc95c94bddfc",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -380
+      ]
+    }
+  ],
+  "connections": {
+    "Missed Call Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Call Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Call Event": {
+      "main": [
+        [
+          {
+            "node": "Rules: Config, Hours, Opt-out, Dedupe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rules: Config, Hours, Opt-out, Dedupe": {
+      "main": [
+        [
+          {
+            "node": "LLM personalization on?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM personalization on?": {
+      "main": [
+        [
+          {
+            "node": "LLM Personalize (OpenAI-compatible)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Test mode?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Personalize (OpenAI-compatible)": {
+      "main": [
+        [
+          {
+            "node": "Apply LLM Text (with guardrails)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply LLM Text (with guardrails)": {
+      "main": [
+        [
+          {
+            "node": "Test mode?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMS Reply Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Inbound SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Inbound SMS": {
+      "main": [
+        [
+          {
+            "node": "Handle Reply: STOP / HELP / Booking / Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Reply: STOP / HELP / Booking / Owner": {
+      "main": [
+        [
+          {
+            "node": "Test mode?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test mode?": {
+      "main": [
+        [
+          {
+            "node": "TEST: Log Would-Be SMS + Owner Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Live: Route by Provider",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TEST: Log Would-Be SMS + Owner Alert": {
+      "main": [
+        [
+          {
+            "node": "Build Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Live: Route by Provider": {
+      "main": [
+        [
+          {
+            "node": "Twilio: Send SMS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telnyx: Send SMS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Live: Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio: Send SMS": {
+      "main": [
+        [
+          {
+            "node": "Live: Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telnyx: Send SMS": {
+      "main": [
+        [
+          {
+            "node": "Live: Log Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Live: Log Result": {
+      "main": [
+        [
+          {
+            "node": "Owner alert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Owner alert?": {
+      "main": [
+        [
+          {
+            "node": "Owner Alert Email (SMTP)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Owner Alert Email (SMTP)": {
+      "main": [
+        [
+          {
+            "node": "Build Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "timezone": "America/Chicago"
+  },
+  "pinData": {},
+  "tags": [],
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

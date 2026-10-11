@@ -1,0 +1,12 @@
+{
+  "_how": "Votel has no fixed outbound call-ended schema. Build: call_ended trigger (statuses missed, no_answer, voicemail; direction inbound; phone_number = the client's line) -> webhook step (POST, payload_type json, url https://YOUR-N8N/webhook/missed-call) with these data keys. Only {{call.caller_id_number}} and {{call.caller_id_name}} are confirmed Votel variables; status is static because the trigger filter already limits it to missed calls. NOT deployed: do not build this on Ali's own Votel number.",
+  "source": "votel",
+  "event": "call_ended",
+  "business_id": "kettle-creek-auto",
+  "call": {
+    "caller_id_number": "{{call.caller_id_number}}",
+    "caller_id_name": "{{call.caller_id_name}}",
+    "to_number": "+15555550100",
+    "status": "missed"
+  }
+}

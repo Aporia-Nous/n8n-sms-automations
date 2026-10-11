@@ -1,0 +1,25 @@
+{
+    "ok": true,
+    "flow": "sms_router",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550142",
+    "action": "opt_in",
+    "reason": "start_keyword:START",
+    "test_mode": true,
+    "sms": {
+        "to": "+15555550142",
+        "from": "+15555550100",
+        "kind": "start_confirmation",
+        "body": "Kettle Creek Auto Repair: you're subscribed again. Reply STOP to opt out.",
+        "segments": 1,
+        "encoding": "GSM-7"
+    },
+    "owner_alert": null,
+    "llm_used": false,
+    "delivery": {
+        "mode": "test",
+        "sms": "logged_not_sent",
+        "owner_alert": "none"
+    }
+}

@@ -1,0 +1,31 @@
+01_store_A1 -> A1:stored(reminders scheduled)
+02_store_A2 -> A2:stored(reminders scheduled)
+03_store_A3 -> A3:stored(reminders scheduled)
+04_store_A4_optedout -> A4:stored(reminders scheduled)
+05_A4_texts_STOP -> A4:opt_out(stop_keyword:STOP) sms=stop_confirmation +alert
+06_store_A5 -> A5:stored(reminders scheduled)
+07_cancel_A5 -> A5:cancelled(no further reminders)
+08_store_A6 -> A6:stored(reminders scheduled)
+09_reschedule_A6 -> A6:rescheduled(reminders reset for new time)
+10_store_A8 -> A8:stored(reminders scheduled)
+11_scan_Mon_1300_nothing_due -> -:none(nothing_due)
+12_scan_Mon_1405_24h_A1 -> A1:send_reminder(24h_reminder) sms=reminder_24h
+13_scan_Mon_1420_once_only -> -:none(nothing_due)
+14_reply_C_confirm -> A1:confirmed(confirm_keyword:C) sms=confirm_reply
+15_scan_Mon_1605_optout_cancelled -> A4:skip(24h:opted_out) +alert
+16_scan_Tue_0935_24h_A2_A3 -> A2:send_reminder(24h_reminder) sms=reminder_24h; A3:send_reminder(24h_reminder) sms=reminder_24h
+17_reply_R_reschedule -> A2:reschedule_requested(reschedule_keyword:R) sms=reschedule_reply +alert
+18_reply_cancel_sentence -> A3:cancel_requested(cancel_in_message) sms=cancel_ack +alert
+19_store_A7_booked_late -> A7:stored(reminders scheduled)
+20_scan_Tue_1205_2h_A1_skip_A7_24h -> A1:send_reminder(2h_reminder) sms=reminder_2h; A8:send_reminder(24h_reminder) sms=reminder_24h; A7:skip(24h:booked_after_due_time)
+21_scan_Tue_1505_2h_A7 -> A4:skip(2h:opted_out); A7:send_reminder(2h_reminder) sms=reminder_2h
+22_reply_running_late -> A7:running_late(late_in_message) sms=late_ack +alert
+23_scan_Wed_0635_quiet_too_late -> A2:skip(2h:quiet_hours_until_too_late)
+24_scan_Wed_0750_quiet_deferred -> A8:deferred(2h:quiet_hours)
+25_scan_Wed_0800_deferred_sends -> A8:send_reminder(2h_reminder) sms=reminder_2h
+26_scan_Wed_1105_rescheduled_A6 -> A6:send_reminder(24h_reminder) sms=reminder_24h
+27_reply_bare_CANCEL_is_optout -> A6:opt_out(stop_keyword:CANCEL) sms=stop_confirmation +alert
+28_scan_Thu_0905_A6_optedout -> A6:skip(2h:opted_out) +alert
+29_reply_HELP -> A1:help(help_keyword:HELP) sms=help_reply
+30_reply_unknown_number -> -:forward(no_upcoming_appointment_found) +alert
+Saved to /data/n8n-flows/tests/reminders

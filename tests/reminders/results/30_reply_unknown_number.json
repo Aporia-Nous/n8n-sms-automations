@@ -1,0 +1,22 @@
+{
+    "ok": true,
+    "flow": "reminder_reply",
+    "source": "generic",
+    "business_id": "bright-paws-grooming",
+    "from": "+15555550119",
+    "action": "forward",
+    "reason": "no_upcoming_appointment_found",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": {
+        "subject": "Text from +15555550119",
+        "priority": "normal"
+    },
+    "llm_used": false,
+    "ref": "",
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "logged_not_sent"
+    }
+}

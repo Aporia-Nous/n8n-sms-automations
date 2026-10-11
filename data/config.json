@@ -1,0 +1,212 @@
+{
+  "_readme": "Per-business settings for the Missed-Call Text-Back template. Edits take effect on the next webhook call (no restart). Phone numbers here are fictional 555-01xx demo numbers.",
+  "defaults": {
+    "test_mode": true,
+    "provider": "test",
+    "dedupe_window_hours": 24,
+    "after_hours_mode": "after_hours_template",
+    "owner_alert_on_duplicate": false,
+    "owner_alert_on_opted_out": true,
+    "send_stop_confirmation": true,
+    "auto_reply_booking_link": true,
+    "booking_reply_window_hours": 12,
+    "append_opt_out_footer": true,
+    "webhook_token": "",
+    "llm": {
+      "enabled": false,
+      "note": "Optional. When true, the 'LLM Personalize' node (disabled by default) is used. It needs an OpenAI-compatible endpoint + credential. Output falls back to the template on any problem.",
+      "max_chars": 320
+    },
+    "quiet_hours": [
+      "20:00",
+      "08:00"
+    ],
+    "_quiet_hours_note": "Local time window with no reminder/review texts. Missed-call text-backs ignore it (the caller just called).",
+    "router": {
+      "_note": "Inbound-SMS router (/webhook/sms-in). Routes a reply to the automation that most recently texted this number.",
+      "missed_call_window_hours": 72,
+      "reminder_window_hours": 72,
+      "reminder_after_start_hours": 2,
+      "review_window_days": 7,
+      "tie_window_minutes": 15,
+      "internal_base_url": "http://127.0.0.1:5678/webhook/",
+      "help_template": "{{business_name}}: texts about your calls, appointments and visits. Questions? Call {{business_number}}. Msg&data rates may apply. Reply STOP to opt out."
+    }
+  },
+  "businesses": {
+    "kettle-creek-auto": {
+      "name": "Kettle Creek Auto Repair",
+      "numbers": [
+        "+15555550100"
+      ],
+      "sms_from": "+15555550100",
+      "timezone": "America/Chicago",
+      "hours": {
+        "mon": [
+          "08:00",
+          "17:30"
+        ],
+        "tue": [
+          "08:00",
+          "17:30"
+        ],
+        "wed": [
+          "08:00",
+          "17:30"
+        ],
+        "thu": [
+          "08:00",
+          "17:30"
+        ],
+        "fri": [
+          "08:00",
+          "17:30"
+        ],
+        "sat": [
+          "09:00",
+          "13:00"
+        ],
+        "sun": null
+      },
+      "closed_dates": [
+        "2026-11-26",
+        "2026-12-25"
+      ],
+      "booking_link": "https://example.com/book/kettle-creek",
+      "owner_alert": {
+        "name": "Shop owner (demo)",
+        "email": "owner@example.com",
+        "sms": "+15555550199"
+      },
+      "ignore_numbers": [
+        "+15555550199"
+      ],
+      "templates": {
+        "in_hours": "Hi, it's {{business_name}}. Sorry we missed your call! How can we help? Reply here or book: {{booking_link}}",
+        "after_hours": "{{business_name}}: sorry we missed you! We open {{next_open}}. Reply here or book: {{booking_link}}",
+        "help": "{{business_name}}: we text back missed callers. Questions? Reply here or call {{business_number}}. Msg&data rates may apply. Reply STOP to opt out.",
+        "stop_confirm": "{{business_name}}: you're unsubscribed and won't get more texts from us. Reply START to resubscribe.",
+        "start_confirm": "{{business_name}}: you're subscribed again. Reply STOP to opt out.",
+        "booking_reply": "Thanks! You can pick a time here: {{booking_link}} Or just reply with a day and time that works and we'll confirm.",
+        "opt_out_footer": "Reply STOP to opt out."
+      },
+      "reviews": {
+        "enabled": true,
+        "review_link": "https://example.com/review/kettle-creek",
+        "delay_hours": 2,
+        "followup_enabled": true,
+        "followup_after_days": 3,
+        "min_days_between_requests": 90,
+        "max_send_delay_days": 7,
+        "templates": {
+          "request": "Thanks for choosing {{business_name}}, {{first_name}}! Would you leave us a quick Google review? {{review_link}}",
+          "followup": "Hi {{first_name}}, {{business_name}} again. If you have a minute, a review really helps: {{review_link}}",
+          "happy_reply": "Thank you, {{first_name}}! If you have a moment, here's the review link: {{review_link}}",
+          "unhappy_reply": "Sorry to hear that, {{first_name}}. The owner will reach out to make it right. You're always welcome to share a review: {{review_link}}",
+          "help": "{{business_name}}: we text customers after a visit to ask for a review or feedback. Call {{business_number}}. Msg&data rates may apply. Reply STOP to opt out."
+        }
+      },
+      "reminders": {
+        "enabled": true,
+        "offsets_hours": [
+          24,
+          2
+        ],
+        "min_lead_minutes": 30,
+        "templates": {
+          "reminder_24h": "Hi {{first_name}}, {{business_name}} reminder: your {{pet_or_service}} is {{when}}. Reply C to confirm or R to reschedule.",
+          "reminder_2h": "{{business_name}}: see you {{when}} for your {{pet_or_service}}. Reply C to confirm or R to reschedule.",
+          "confirm_reply": "Thanks {{first_name}}, you're confirmed for {{when}}.",
+          "reschedule_reply": "No problem! Pick a new time here: {{booking_link}} or reply with a day/time that works.",
+          "cancel_ack": "Got it, {{first_name}}. We've told the shop you want to cancel {{when}}. They'll confirm shortly.",
+          "late_ack": "Thanks for the heads-up, {{first_name}}! We've let the shop know.",
+          "help": "{{business_name}}: appointment reminders. Reply C to confirm, R to reschedule. Call {{business_number}}. Msg&data rates may apply. Reply STOP to opt out."
+        }
+      }
+    },
+    "bright-paws-grooming": {
+      "name": "Bright Paws Grooming",
+      "numbers": [
+        "+15555550110"
+      ],
+      "sms_from": "+15555550110",
+      "timezone": "America/Chicago",
+      "hours": {
+        "mon": null,
+        "tue": [
+          "08:00",
+          "17:00"
+        ],
+        "wed": [
+          "08:00",
+          "17:00"
+        ],
+        "thu": [
+          "08:00",
+          "17:00"
+        ],
+        "fri": [
+          "08:00",
+          "17:00"
+        ],
+        "sat": [
+          "08:00",
+          "14:00"
+        ],
+        "sun": null
+      },
+      "closed_dates": [
+        "2026-11-26",
+        "2026-12-25"
+      ],
+      "booking_link": "https://example.com/book/bright-paws",
+      "owner_alert": {
+        "name": "Groomer (demo)",
+        "email": "owner@example.com",
+        "sms": "+15555550198"
+      },
+      "ignore_numbers": [
+        "+15555550198"
+      ],
+      "templates": {
+        "help": "{{business_name}}: appointment texts. Questions? Call {{business_number}}. Msg&data rates may apply. Reply STOP to opt out.",
+        "stop_confirm": "{{business_name}}: you're unsubscribed and won't get more texts from us. Reply START to resubscribe.",
+        "start_confirm": "{{business_name}}: you're subscribed again. Reply STOP to opt out.",
+        "opt_out_footer": "Reply STOP to opt out."
+      },
+      "reminders": {
+        "enabled": true,
+        "offsets_hours": [
+          24,
+          2
+        ],
+        "min_lead_minutes": 30,
+        "templates": {
+          "reminder_24h": "Hi {{first_name}}, reminder from {{business_name}}: {{pet_or_service}} is booked {{when}}. Reply C to confirm or R to reschedule.",
+          "reminder_2h": "{{business_name}}: see you {{when}} for {{pet_or_service}}! Reply C to confirm or R to reschedule.",
+          "confirm_reply": "Thanks {{first_name}}, you're confirmed for {{when}}.",
+          "reschedule_reply": "No problem! Pick a new time here: {{booking_link}} or reply with a day/time and we'll sort it out.",
+          "cancel_ack": "Got it, {{first_name}}. We've told the team you want to cancel {{when}}. They'll confirm shortly.",
+          "late_ack": "Thanks for the heads-up, {{first_name}}! We've let the team know.",
+          "help": "{{business_name}}: appointment reminders. Reply C to confirm, R to reschedule. Call {{business_number}} for help. Msg&data rates may apply. Reply STOP to opt out."
+        }
+      },
+      "reviews": {
+        "enabled": true,
+        "review_link": "https://example.com/review/bright-paws",
+        "delay_hours": 2,
+        "followup_enabled": true,
+        "followup_after_days": 3,
+        "min_days_between_requests": 90,
+        "max_send_delay_days": 7,
+        "templates": {
+          "request": "Thanks for choosing {{business_name}}, {{first_name}}! Would you leave us a quick Google review? {{review_link}}",
+          "followup": "Hi {{first_name}}, {{business_name}} again. If you have a minute, a review really helps: {{review_link}}",
+          "happy_reply": "Thank you, {{first_name}}! If you have a moment, here's the review link: {{review_link}}",
+          "unhappy_reply": "Sorry to hear that, {{first_name}}. The owner will reach out to make it right. You're always welcome to share a review: {{review_link}}",
+          "help": "{{business_name}}: we text customers after a visit to ask for a review or feedback. Call {{business_number}}. Msg&data rates may apply. Reply STOP to opt out."
+        }
+      }
+    }
+  }
+}

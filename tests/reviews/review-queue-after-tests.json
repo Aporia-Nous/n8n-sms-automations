@@ -1,0 +1,66 @@
+{
+  "kettle-creek-auto": {
+    "J1": {
+      "job_id": "J1",
+      "phone": "+15555550131",
+      "customer_name": "Chris Allen",
+      "service": "brake pads",
+      "completed_at": "2026-11-10T16:00:00.000Z",
+      "send_after": "2026-11-10T18:00:00.000Z",
+      "status": "sent",
+      "sent_at": "2026-11-10T18:05:00.000Z",
+      "replied_at": "2026-11-10T18:40:00.000Z",
+      "reply_mood": "happy",
+      "reply_rating": 5
+    },
+    "J2": {
+      "job_id": "J2",
+      "phone": "+15555550132",
+      "customer_name": "Morgan Bell",
+      "service": "check engine light",
+      "completed_at": "2026-11-10T22:45:00.000Z",
+      "send_after": "2026-11-11T14:00:00.000Z",
+      "status": "sent",
+      "sent_at": "2026-11-11T14:05:00.000Z",
+      "replied_at": "2026-11-11T15:00:00.000Z",
+      "reply_mood": "unhappy",
+      "reply_rating": 2
+    },
+    "J3": {
+      "job_id": "J3",
+      "phone": "+15555550133",
+      "customer_name": "Pat Quinn",
+      "service": "oil change",
+      "completed_at": "2026-11-14T18:30:00.000Z",
+      "send_after": "2026-11-16T14:00:00.000Z",
+      "status": "followed_up",
+      "sent_at": "2026-11-16T14:05:00.000Z",
+      "followup_sent_at": "2026-11-19T14:10:00.000Z",
+      "replied_at": "2026-11-19T15:05:00.000Z",
+      "reply_mood": "neutral",
+      "reply_rating": null
+    },
+    "J6": {
+      "job_id": "J6",
+      "phone": "+15555550136",
+      "customer_name": "Kelly Moss",
+      "service": "alignment",
+      "completed_at": "2026-11-10T16:30:00.000Z",
+      "send_after": "2026-11-10T18:30:00.000Z",
+      "status": "cancelled_opted_out"
+    },
+    "J8": {
+      "job_id": "J8",
+      "phone": "+15555550138",
+      "customer_name": "Sam Ortiz",
+      "service": "battery",
+      "completed_at": "2026-11-18T21:00:00.000Z",
+      "send_after": "2026-11-18T23:00:00.000Z",
+      "status": "sent",
+      "sent_at": "2026-11-19T14:10:00.000Z",
+      "replied_at": "2026-11-19T15:00:00.000Z",
+      "reply_mood": "unhappy",
+      "reply_rating": 3
+    }
+  }
+}

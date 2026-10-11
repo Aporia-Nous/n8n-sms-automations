@@ -1,0 +1,29 @@
+01_job_J1_queued_2h_later -> J1:queued(send_in_2h) send today at 12 PM
+02_job_J1_again_duplicate -> J1:skip(duplicate_job)
+03_job_J2_after_close_moves_am -> J2:queued(moved_into_business_hours) send tomorrow at 8 AM
+04_job_J3_sat_moves_to_monday -> J3:queued(moved_into_business_hours) send Mon, Nov 16 at 8 AM
+05_robin_texts_STOP -> -:opt_out(stop_keyword:STOP) sms=stop_confirmation +alert:low
+06_job_J5_opted_out -> J5:skip(opted_out)
+07_job_J6_queued -> J6:queued(send_in_2h) send today at 12:30 PM
+08_scan_Tue_1100_nothing_due -> -:none(nothing_due)
+09_scan_Tue_1205_J1_request -> J1:send_request(review_request_due) sms=review_request
+10_scan_Tue_1220_once_only -> -:none(nothing_due)
+11_kelly_STOP_before_send -> -:opt_out(stop_keyword:UNSUBSCRIBE) sms=stop_confirmation +alert:low
+12_scan_Tue_1235_J6_cancelled -> J6:skip(request:opted_out)
+13_reply_J1_happy_5_stars -> J1:happy_link_resent(rating_5) sms=review_happy_reply +alert:low
+14_reply_J1_second_reply -> J1:forward(already_replied_once) +alert:normal
+15_scan_Tue_1850_after_hours -> -:none(nothing_due)
+16_scan_Wed_0805_J2_request -> J2:send_request(review_request_due) sms=review_request
+17_reply_J2_unhappy_rating_2 -> J2:unhappy_owner_alerted(rating_2) sms=review_unhappy_reply +alert:high
+18_job_J4_same_customer_90d -> J4:skip(recently_asked)
+19_scan_Mon_0805_J3_no_followups -> J3:send_request(review_request_due) sms=review_request
+20_job_J8_queued -> J8:queued(send_in_2h) send today at 5 PM
+21_scan_Wed_2100_quiet_deferred -> J8:deferred(request:outside_business_or_quiet_hours)
+22_scan_Thu_0810_J8_and_J3_followup -> J3:send_followup(no_reply_after_3d) sms=review_followup; J8:send_request(review_request_due) sms=review_request
+23_scan_Thu_0830_once_only -> -:none(nothing_due)
+24_reply_J8_rating_3_unhappy -> J8:unhappy_owner_alerted(rating_3) sms=review_unhappy_reply +alert:high
+25_reply_J3_neutral -> J3:forward(neutral_reply) +alert:normal
+26_reply_HELP -> J3:help(help_keyword:HELP) sms=help_reply
+27_reply_unknown_number -> -:forward(no_review_request_found) +alert:normal
+28_incentive_template_refused -> J9:skip(template_contains_incentive:request) +alert:high
+Saved to /data/n8n-flows/tests/reviews

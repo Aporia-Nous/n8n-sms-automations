@@ -1,0 +1,26 @@
+{
+    "ok": true,
+    "flow": "review_reply",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550133",
+    "action": "forward",
+    "reason": "neutral_reply",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": {
+        "subject": "Reply from Pat Quinn",
+        "priority": "normal"
+    },
+    "llm_used": false,
+    "ref": "J3",
+    "detail": {
+        "rating": null,
+        "mood": "neutral"
+    },
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "logged_not_sent"
+    }
+}

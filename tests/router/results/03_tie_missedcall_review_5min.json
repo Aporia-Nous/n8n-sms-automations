@@ -1,0 +1,39 @@
+{
+    "ok": true,
+    "flow": "sms_router",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550142",
+    "action": "forward_to_owner",
+    "reason": "unclear_tie:reviews+missed_call within 5 min",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": {
+        "subject": "Text from +15555550142 (unclear which conversation)",
+        "priority": "normal"
+    },
+    "llm_used": false,
+    "detail": {
+        "rule": "tie:reviews+missed_call within 5 min",
+        "contexts": [
+            {
+                "automation": "missed_call",
+                "last_out": "2026-11-09T21:00:00.000Z",
+                "live": true,
+                "why": "text-back sent"
+            },
+            {
+                "automation": "reviews",
+                "ref": "KJ2",
+                "last_out": "2026-11-09T21:05:00.000Z",
+                "live": true,
+                "why": "review request sent"
+            }
+        ]
+    },
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "logged_not_sent"
+    }
+}

@@ -1,0 +1,26 @@
+{
+    "ok": true,
+    "flow": "review_reply",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550139",
+    "action": "forward",
+    "reason": "no_review_request_found",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": {
+        "subject": "Text from +15555550139",
+        "priority": "normal"
+    },
+    "llm_used": false,
+    "ref": "",
+    "detail": {
+        "rating": null,
+        "mood": "neutral"
+    },
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "logged_not_sent"
+    }
+}

@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+"""Builds ../appointment-reminders.json"""
+from wflib import WF
+w = WF('reminders')
+w.webhook("Appointment Webhook", "appointment", [0, 0], "POST booked / rescheduled / cancelled appointments here (calendar, form, Votel webhook step).")
+w.code("Store / Update Appointment", "r_upsert.js", [240, 0], "Writes data/appointments.json")
+w.code("Respond: Appointment Saved", "respond.js", [480, 0])
+w.link("Appointment Webhook", "Store / Update Appointment"); w.link("Store / Update Appointment", "Respond: Appointment Saved")
+w.schedule("Every 15 Minutes", 15, [0, 260], "Real-time scan for due reminders")
+w.webhook("Run Scan Now (test)", "reminders-run", [0, 420], "Test hook: POST {\"now\":\"ISO time\"} to scan at a simulated time (only honored in test mode).", all_entries=True)
+w.code("Find Due Reminders (24h / 2h)", "r_scan.js", [260, 340], "Quiet hours, opt-outs, once-only marks in appointments.json")
+w.link("Every 15 Minutes", "Find Due Reminders (24h / 2h)"); w.link("Run Scan Now (test)", "Find Due Reminders (24h / 2h)")
+w.webhook("Reminder Reply Webhook", "reminder-reply", [0, 700], "Inbound SMS for the reminder number: C / R / cancel / late / STOP / HELP")
+w.code("Normalize Inbound SMS", "normalize_sms.js", [240, 700])
+w.code("Handle Reminder Reply", "r_reply.js", [480, 700], "Shared STOP list: data/optouts.json")
+w.link("Reminder Reply Webhook", "Normalize Inbound SMS"); w.link("Normalize Inbound SMS", "Handle Reminder Reply")
+w.delivery_tail(760, 460)
+w.link("Find Due Reminders (24h / 2h)", "Test mode?"); w.link("Handle Reminder Reply", "Test mode?")
+w.sticky("## Appointment Reminders (template)\nTest mode is ON by default (data/config.json). Nothing is sent: would-be texts go to data/logs/outbox.jsonl.\n\n1. POST appointments to /webhook/appointment\n2. Every 15 min, due 24h and 2h reminders are found (quiet hours, opt-outs, once-only).\n3. Replies: C confirm, R reschedule, 'cancel...' and 'running late' alert the owner, STOP/HELP shared with all automations.", [-40, -380])
+w.save("ApptReminders001", "Appointment Reminders (template)", "appointment-reminders.json")

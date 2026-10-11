@@ -1,0 +1,24 @@
+[
+    {
+        "ok": true,
+        "flow": "reminder",
+        "source": "run_webhook",
+        "business_id": "bright-paws-grooming",
+        "from": "+15555550114",
+        "action": "skip",
+        "reason": "24h:opted_out",
+        "test_mode": true,
+        "sms": null,
+        "owner_alert": {
+            "subject": "No reminder sent: Alex Kim opted out",
+            "priority": "low"
+        },
+        "llm_used": false,
+        "ref": "A4",
+        "delivery": {
+            "mode": "test",
+            "sms": "none",
+            "owner_alert": "logged_not_sent"
+        }
+    }
+]

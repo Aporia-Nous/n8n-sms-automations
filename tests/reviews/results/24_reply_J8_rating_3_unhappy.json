@@ -1,0 +1,33 @@
+{
+    "ok": true,
+    "flow": "review_reply",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550138",
+    "action": "unhappy_owner_alerted",
+    "reason": "rating_3",
+    "test_mode": true,
+    "sms": {
+        "to": "+15555550138",
+        "from": "+15555550100",
+        "kind": "review_unhappy_reply",
+        "body": "Sorry to hear that, Sam. The owner will reach out to make it right. You're always welcome to share a review: https://example.com/review/kettle-creek",
+        "segments": 1,
+        "encoding": "GSM-7"
+    },
+    "owner_alert": {
+        "subject": "PRIVATE: unhappy customer Sam Ortiz",
+        "priority": "high"
+    },
+    "llm_used": false,
+    "ref": "J8",
+    "detail": {
+        "rating": 3,
+        "mood": "unhappy"
+    },
+    "delivery": {
+        "mode": "test",
+        "sms": "logged_not_sent",
+        "owner_alert": "logged_not_sent"
+    }
+}

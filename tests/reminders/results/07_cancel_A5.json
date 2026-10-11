@@ -1,0 +1,24 @@
+{
+    "ok": true,
+    "flow": "appointment_upsert",
+    "source": "generic",
+    "business_id": "bright-paws-grooming",
+    "from": "",
+    "action": "cancelled",
+    "reason": "no further reminders",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": null,
+    "llm_used": false,
+    "ref": "A5",
+    "detail": {
+        "start": "2026-11-10T21:00:00.000Z",
+        "status": "cancelled",
+        "local": "today at 3 PM",
+        "reminders_planned": [
+            "24h before",
+            "2h before"
+        ]
+    },
+    "delivery": null
+}

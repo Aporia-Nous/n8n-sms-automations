@@ -1,0 +1,29 @@
+{
+    "ok": true,
+    "flow": "reminder_reply",
+    "source": "generic",
+    "business_id": "bright-paws-grooming",
+    "from": "+15555550112",
+    "action": "reschedule_requested",
+    "reason": "reschedule_keyword:R",
+    "test_mode": true,
+    "sms": {
+        "to": "+15555550112",
+        "from": "+15555550110",
+        "kind": "reschedule_reply",
+        "body": "No problem! Pick a new time here: https://example.com/book/bright-paws or reply with a day/time and we'll sort it out.",
+        "segments": 1,
+        "encoding": "GSM-7"
+    },
+    "owner_alert": {
+        "subject": "Reschedule request: Sam Lee",
+        "priority": "high"
+    },
+    "llm_used": false,
+    "ref": "A2",
+    "delivery": {
+        "mode": "test",
+        "sms": "logged_not_sent",
+        "owner_alert": "logged_not_sent"
+    }
+}

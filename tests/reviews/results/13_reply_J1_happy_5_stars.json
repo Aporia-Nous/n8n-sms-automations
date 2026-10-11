@@ -1,0 +1,33 @@
+{
+    "ok": true,
+    "flow": "review_reply",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550131",
+    "action": "happy_link_resent",
+    "reason": "rating_5",
+    "test_mode": true,
+    "sms": {
+        "to": "+15555550131",
+        "from": "+15555550100",
+        "kind": "review_happy_reply",
+        "body": "Thank you, Chris! If you have a moment, here's the review link: https://example.com/review/kettle-creek",
+        "segments": 1,
+        "encoding": "GSM-7"
+    },
+    "owner_alert": {
+        "subject": "Happy customer: Chris Allen",
+        "priority": "low"
+    },
+    "llm_used": false,
+    "ref": "J1",
+    "detail": {
+        "rating": 5,
+        "mood": "happy"
+    },
+    "delivery": {
+        "mode": "test",
+        "sms": "logged_not_sent",
+        "owner_alert": "logged_not_sent"
+    }
+}

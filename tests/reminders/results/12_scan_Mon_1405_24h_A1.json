@@ -1,0 +1,32 @@
+[
+    {
+        "ok": true,
+        "flow": "reminder",
+        "source": "run_webhook",
+        "business_id": "bright-paws-grooming",
+        "from": "+15555550111",
+        "action": "send_reminder",
+        "reason": "24h_reminder",
+        "test_mode": true,
+        "sms": {
+            "to": "+15555550111",
+            "from": "+15555550110",
+            "kind": "reminder_24h",
+            "body": "Hi Jamie, reminder from Bright Paws Grooming: Bella's full groom is booked tomorrow at 2 PM. Reply C to confirm or R to reschedule. Reply STOP to opt out.",
+            "segments": 1,
+            "encoding": "GSM-7"
+        },
+        "owner_alert": null,
+        "llm_used": false,
+        "ref": "A1",
+        "detail": {
+            "appointment_start": "2026-11-10T20:00:00.000Z",
+            "when": "tomorrow at 2 PM"
+        },
+        "delivery": {
+            "mode": "test",
+            "sms": "logged_not_sent",
+            "owner_alert": "none"
+        }
+    }
+]

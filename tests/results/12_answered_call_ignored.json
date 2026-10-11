@@ -1,0 +1,18 @@
+{
+    "ok": true,
+    "flow": "missed_call",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550189",
+    "action": "skip",
+    "reason": "not_missed:answered",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": null,
+    "llm_used": false,
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "none"
+    }
+}

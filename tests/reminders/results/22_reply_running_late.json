@@ -1,0 +1,29 @@
+{
+    "ok": true,
+    "flow": "reminder_reply",
+    "source": "generic",
+    "business_id": "bright-paws-grooming",
+    "from": "+15555550117",
+    "action": "running_late",
+    "reason": "late_in_message",
+    "test_mode": true,
+    "sms": {
+        "to": "+15555550117",
+        "from": "+15555550110",
+        "kind": "late_ack",
+        "body": "Thanks for the heads-up, Eli! We've let the team know.",
+        "segments": 1,
+        "encoding": "GSM-7"
+    },
+    "owner_alert": {
+        "subject": "Running late: Eli Park",
+        "priority": "high"
+    },
+    "llm_used": false,
+    "ref": "A7",
+    "delivery": {
+        "mode": "test",
+        "sms": "logged_not_sent",
+        "owner_alert": "logged_not_sent"
+    }
+}

@@ -1,0 +1,149 @@
+{
+  "bright-paws-grooming": {
+    "A1": {
+      "id": "A1",
+      "phone": "+15555550111",
+      "customer_name": "Jamie Rivera",
+      "service": "Bella's full groom",
+      "start": "2026-11-10T20:00:00.000Z",
+      "status": "confirmed",
+      "booked_at": "2026-11-01T16:00:00.000Z",
+      "reminders": {
+        "24h": {
+          "status": "sent",
+          "at": "2026-11-09T20:05:00.000Z"
+        },
+        "2h": {
+          "status": "sent",
+          "at": "2026-11-10T18:05:00.000Z"
+        }
+      },
+      "confirmed_at": "2026-11-09T20:30:00.000Z"
+    },
+    "A2": {
+      "id": "A2",
+      "phone": "+15555550112",
+      "customer_name": "Sam Lee",
+      "service": "Rocky's bath",
+      "start": "2026-11-11T14:30:00.000Z",
+      "status": "booked",
+      "booked_at": "2026-11-01T16:00:00.000Z",
+      "reminders": {
+        "24h": {
+          "status": "sent",
+          "at": "2026-11-10T15:35:00.000Z"
+        },
+        "2h": {
+          "status": "skipped_quiet_hours",
+          "at": "2026-11-11T12:35:00.000Z"
+        }
+      },
+      "reschedule_requested_at": "2026-11-10T16:00:00.000Z"
+    },
+    "A3": {
+      "id": "A3",
+      "phone": "+15555550113",
+      "customer_name": "Priya Shah",
+      "service": "Milo's nail trim",
+      "start": "2026-11-11T15:30:00.000Z",
+      "status": "cancel_requested",
+      "booked_at": "2026-11-01T16:00:00.000Z",
+      "reminders": {
+        "24h": {
+          "status": "sent",
+          "at": "2026-11-10T15:35:00.000Z"
+        }
+      },
+      "cancel_requested_at": "2026-11-10T16:05:00.000Z"
+    },
+    "A4": {
+      "id": "A4",
+      "phone": "+15555550114",
+      "customer_name": "Alex Kim",
+      "service": "Luna's groom",
+      "start": "2026-11-10T22:00:00.000Z",
+      "status": "booked",
+      "booked_at": "2026-11-01T16:00:00.000Z",
+      "reminders": {
+        "24h": {
+          "status": "skipped_opted_out",
+          "at": "2026-11-09T22:05:00.000Z"
+        },
+        "2h": {
+          "status": "skipped_opted_out",
+          "at": "2026-11-10T21:05:00.000Z"
+        }
+      }
+    },
+    "A5": {
+      "id": "A5",
+      "phone": "+15555550115",
+      "customer_name": "Chris Doe",
+      "service": "Max's bath",
+      "start": "2026-11-10T21:00:00.000Z",
+      "status": "cancelled",
+      "booked_at": "2026-11-01T16:00:00.000Z",
+      "reminders": {},
+      "updated_at": "2026-11-02T15:00:00.000Z"
+    },
+    "A6": {
+      "id": "A6",
+      "phone": "+15555550116",
+      "customer_name": "Dana Cruz",
+      "service": "Pepper's groom",
+      "start": "2026-11-12T17:00:00.000Z",
+      "status": "booked",
+      "booked_at": "2026-11-01T16:00:00.000Z",
+      "reminders": {
+        "24h": {
+          "status": "sent",
+          "at": "2026-11-11T17:05:00.000Z"
+        },
+        "2h": {
+          "status": "skipped_opted_out",
+          "at": "2026-11-12T15:05:00.000Z"
+        }
+      },
+      "rescheduled_at": "2026-11-03T15:00:00.000Z",
+      "updated_at": "2026-11-03T15:00:00.000Z"
+    },
+    "A8": {
+      "id": "A8",
+      "phone": "+15555550118",
+      "customer_name": "Tom Ng",
+      "service": "Daisy's puppy trim",
+      "start": "2026-11-11T15:45:00.000Z",
+      "status": "booked",
+      "booked_at": "2026-11-01T16:00:00.000Z",
+      "reminders": {
+        "24h": {
+          "status": "sent",
+          "at": "2026-11-10T18:05:00.000Z"
+        },
+        "2h": {
+          "status": "sent",
+          "at": "2026-11-11T14:00:00.000Z"
+        }
+      }
+    },
+    "A7": {
+      "id": "A7",
+      "phone": "+15555550117",
+      "customer_name": "Eli Park",
+      "service": "Coco's bath",
+      "start": "2026-11-10T23:00:00.000Z",
+      "status": "booked",
+      "booked_at": "2026-11-10T16:00:00.000Z",
+      "reminders": {
+        "24h": {
+          "status": "skipped_booked_after_due",
+          "at": "2026-11-10T18:05:00.000Z"
+        },
+        "2h": {
+          "status": "sent",
+          "at": "2026-11-10T21:05:00.000Z"
+        }
+      }
+    }
+  }
+}

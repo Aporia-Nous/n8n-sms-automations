@@ -1,0 +1,12 @@
+{
+  "data": {
+    "event_type": "message.received",
+    "occurred_at": "2026-10-08T20:12:00Z",
+    "payload": {
+      "id": "msg-uuid",
+      "from": { "phone_number": "+15555550123" },
+      "to": [ { "phone_number": "+15555550100" } ],
+      "text": "Hi, can I bring my car in tomorrow?"
+    }
+  }
+}

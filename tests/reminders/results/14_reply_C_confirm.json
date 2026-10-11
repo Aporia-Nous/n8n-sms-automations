@@ -1,0 +1,26 @@
+{
+    "ok": true,
+    "flow": "reminder_reply",
+    "source": "generic",
+    "business_id": "bright-paws-grooming",
+    "from": "+15555550111",
+    "action": "confirmed",
+    "reason": "confirm_keyword:C",
+    "test_mode": true,
+    "sms": {
+        "to": "+15555550111",
+        "from": "+15555550110",
+        "kind": "confirm_reply",
+        "body": "Thanks Jamie, you're confirmed for tomorrow at 2 PM.",
+        "segments": 1,
+        "encoding": "GSM-7"
+    },
+    "owner_alert": null,
+    "llm_used": false,
+    "ref": "A1",
+    "delivery": {
+        "mode": "test",
+        "sms": "logged_not_sent",
+        "owner_alert": "none"
+    }
+}

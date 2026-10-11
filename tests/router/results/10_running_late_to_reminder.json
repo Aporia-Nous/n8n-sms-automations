@@ -1,0 +1,29 @@
+{
+    "ok": true,
+    "flow": "sms_router",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550141",
+    "action": "routed",
+    "target": "reminders",
+    "rule": "a:reminder_intent",
+    "test_mode": true,
+    "downstream": {
+        "flow": "reminder_reply",
+        "action": "running_late",
+        "reason": "late_in_message",
+        "ref": "K1",
+        "sms": {
+            "kind": "late_ack",
+            "body": "Thanks for the heads-up, Jordan! We've let the shop know."
+        },
+        "owner_alert": {
+            "subject": "Running late: Jordan Wells",
+            "priority": "high"
+        },
+        "delivery": {
+            "mode": "test",
+            "sms": "logged_not_sent",
+            "owner_alert": "logged_not_sent"
+        }
+    }
+}

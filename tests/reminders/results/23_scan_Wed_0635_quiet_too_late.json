@@ -1,0 +1,21 @@
+[
+    {
+        "ok": true,
+        "flow": "reminder",
+        "source": "run_webhook",
+        "business_id": "bright-paws-grooming",
+        "from": "+15555550112",
+        "action": "skip",
+        "reason": "2h:quiet_hours_until_too_late",
+        "test_mode": true,
+        "sms": null,
+        "owner_alert": null,
+        "llm_used": false,
+        "ref": "A2",
+        "delivery": {
+            "mode": "test",
+            "sms": "none",
+            "owner_alert": "none"
+        }
+    }
+]

@@ -1,0 +1,23 @@
+{
+    "ok": true,
+    "flow": "review_queue",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550132",
+    "action": "queued",
+    "reason": "moved_into_business_hours",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": null,
+    "llm_used": false,
+    "ref": "J2",
+    "detail": {
+        "send_after": "2026-11-11T14:00:00.000Z",
+        "local": "tomorrow at 8 AM"
+    },
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "none"
+    }
+}

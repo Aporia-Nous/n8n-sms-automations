@@ -1,0 +1,7 @@
+# Twilio inbound SMS webhook (number > Messaging > "A message comes in" = https://YOUR-N8N/webhook/sms-reply)
+AccountSid=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+MessageSid=SMxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+From=+15555550156
+To=+15555550100
+Body=Can I come in tomorrow?
+NumSegments=1

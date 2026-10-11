@@ -1,0 +1,25 @@
+{
+    "ok": true,
+    "flow": "sms_router",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550143",
+    "action": "routed",
+    "target": "missed_call",
+    "rule": "c:only_live_context",
+    "test_mode": true,
+    "downstream": {
+        "flow": "sms_reply",
+        "action": "forward",
+        "reason": "normal_reply",
+        "sms": null,
+        "owner_alert": {
+            "subject": "New text reply from +15555550143",
+            "priority": "high"
+        },
+        "delivery": {
+            "mode": "test",
+            "sms": "none",
+            "owner_alert": "logged_not_sent"
+        }
+    }
+}

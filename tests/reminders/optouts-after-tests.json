@@ -1,0 +1,14 @@
+{
+  "bright-paws-grooming": {
+    "+15555550114": {
+      "at": "2026-11-01T17:00:00.000Z",
+      "keyword": "STOP",
+      "via": "reminder_reply"
+    },
+    "+15555550116": {
+      "at": "2026-11-11T17:10:00.000Z",
+      "keyword": "CANCEL",
+      "via": "reminder_reply"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+    "ok": true,
+    "flow": "review_queue",
+    "source": "generic",
+    "business_id": "kettle-creek-auto",
+    "from": "+15555550135",
+    "action": "skip",
+    "reason": "opted_out",
+    "test_mode": true,
+    "sms": null,
+    "owner_alert": null,
+    "llm_used": false,
+    "ref": "J5",
+    "delivery": {
+        "mode": "test",
+        "sms": "none",
+        "owner_alert": "none"
+    }
+}

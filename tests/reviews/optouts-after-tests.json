@@ -1,0 +1,14 @@
+{
+  "kettle-creek-auto": {
+    "+15555550135": {
+      "at": "2026-11-09T15:00:00.000Z",
+      "keyword": "STOP",
+      "via": "review_reply"
+    },
+    "+15555550136": {
+      "at": "2026-11-10T18:25:00.000Z",
+      "keyword": "UNSUBSCRIBE",
+      "via": "review_reply"
+    }
+  }
+}
